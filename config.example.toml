@@ -1,0 +1,36 @@
+# quota-dash configuration
+# Copy to ~/.config/quota-dash/config.toml
+
+[general]
+# Polling interval in seconds (TUI mode)
+polling_interval = 60
+
+# Theme: "auto" (detect terminal), "default", or "ghostty"
+theme = "auto"
+
+# Mode: "dashboard" (TUI) or "cli" (one-shot)
+mode = "dashboard"
+
+[providers.openai]
+enabled = true
+
+# Environment variable containing your OpenAI API key
+# The key needs org-level admin permissions for usage data
+api_key_env = "OPENAI_API_KEY"
+
+# Path to Codex CLI data directory (contains state_5.sqlite for token tracking)
+# log_path = "~/.codex"
+
+# Manual quota entry (used when API is unavailable)
+# balance_usd = 50.00
+# limit_usd = 100.00
+
+[providers.anthropic]
+enabled = true
+
+# Anthropic has no public usage API — quota is manual only
+# balance_usd = 100.00
+# limit_usd = 200.00
+
+# Path to Claude CLI data directory (contains metrics/costs.jsonl)
+# log_path = "~/.claude"

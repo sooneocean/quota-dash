@@ -17,6 +17,11 @@ class ProviderList(Widget):
     }
     """
 
+    def __init__(self, **kwargs: object) -> None:
+        super().__init__(**kwargs)
+        self._total_balance: float = 0.0
+        self._usage_today: float = 0.0
+
     def set_providers(self, names: list[str]) -> None:
         self.providers = names
 
@@ -46,8 +51,8 @@ class ProviderList(Widget):
             lines.append(f"  {marker} {name}")
         lines.append("")
         lines.append("QUICK STATS")
-        total = getattr(self, "_total_balance", 0.0)
-        today = getattr(self, "_usage_today", 0.0)
+        total = self._total_balance
+        today = self._usage_today
         lines.append(f"  Total: ${total:.2f}")
         lines.append(f"  Today: -${today:.2f}")
         return "\n".join(lines)

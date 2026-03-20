@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime
 
@@ -9,6 +10,17 @@ from quota_dash.data.log_parser import parse_codex_logs
 from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo
 from quota_dash.providers.base import Provider
 
+logger = logging.getLogger(__name__)
+
+
+def _error_quota(msg: str) -> QuotaInfo:
+    logger.warning("openai get_quota failed: %s", msg)
+    return QuotaInfo(
+        provider="openai",
+        balance_usd=None, limit_usd=None, usage_today_usd=None,
+        last_updated=datetime.now(), source="error", stale=True,
+    )
+
 
 class OpenAIProvider(Provider):
     name = "openai"
@@ -17,6 +29,12 @@ class OpenAIProvider(Provider):
         self._config = config
 
     async def get_quota(self) -> QuotaInfo:
+        try:
+            return await self._fetch_quota()
+        except Exception as exc:
+            return _error_quota(str(exc))
+
+    async def _fetch_quota(self) -> QuotaInfo:
         now = datetime.now()
 
         api_key = os.environ.get(self._config.api_key_env, "")
@@ -51,8 +69,14 @@ class OpenAIProvider(Provider):
         )
 
     async def get_token_usage(self) -> TokenUsage:
-        log_db = self._config.log_path / "logs_1.sqlite"
-        return parse_codex_logs(log_db)
+        try:
+            return parse_codex_logs(self._config.log_path)
+        except Exception as exc:
+            logger.warning("openai get_token_usage failed: %s", exc)
+            return TokenUsage(
+                input_tokens=0, output_tokens=0, total_tokens=0,
+                history=[], session_id=None, source="error",
+            )
 
     async def get_context_window(self) -> ContextInfo:
         return ContextInfo(

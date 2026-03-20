@@ -45,8 +45,12 @@ def load_config(path: Path | None) -> AppConfig:
             limit_usd=prov.get("limit_usd"),
         )
 
+    polling_interval = general.get("polling_interval", 60)
+    if not isinstance(polling_interval, (int, float)) or polling_interval < 1:
+        polling_interval = 60
+
     return AppConfig(
-        polling_interval=general.get("polling_interval", 60),
+        polling_interval=int(polling_interval),
         theme=general.get("theme", "auto"),
         mode=general.get("mode", "dashboard"),
         providers=providers,

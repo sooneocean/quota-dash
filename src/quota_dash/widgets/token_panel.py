@@ -40,14 +40,18 @@ class TokenPanel(Widget):
         spark = sparkline(hist_vals)
 
         def fmt(n: int) -> str:
-            if n >= 1000:
-                return f"{n / 1000:.1f}K"
+            if n >= 1_000_000:
+                return f"{n / 1_000_000:.1f}M"
+            if n >= 1_000:
+                return f"{n / 1_000:.1f}K"
             return str(n)
 
-        lines = [
-            "Tokens (session)",
-            f"  In:  {fmt(d.input_tokens):>8}  {spark}",
-            f"  Out: {fmt(d.output_tokens):>8}",
-            f"  Total: {fmt(d.total_tokens)}  [{d.source}]",
-        ]
+        has_split = d.input_tokens > 0 or d.output_tokens > 0
+        lines = ["Tokens (session)"]
+        if has_split:
+            lines.append(f"  In:  {fmt(d.input_tokens):>8}  {spark}")
+            lines.append(f"  Out: {fmt(d.output_tokens):>8}")
+        else:
+            lines.append(f"  Total: {fmt(d.total_tokens):>8}  {spark}")
+        lines.append(f"  Total: {fmt(d.total_tokens)}  [{d.source}]")
         return "\n".join(lines)

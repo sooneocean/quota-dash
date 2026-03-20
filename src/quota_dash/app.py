@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -36,9 +39,11 @@ class QuotaDashApp(App):
         self,
         config: AppConfig | None = None,
         theme_override: str | None = None,
+        provider_filter: str | None = None,
     ) -> None:
         self._config = config or AppConfig()
         self._theme_override = theme_override
+        self._provider_filter = provider_filter
         self._store = DataStore()
         self._providers: dict[str, Provider] = {}
 
@@ -78,7 +83,11 @@ class QuotaDashApp(App):
     def _init_providers(self) -> None:
         provider_map = {"openai": OpenAIProvider, "anthropic": AnthropicProvider}
         for name, pconfig in self._config.providers.items():
-            if pconfig.enabled and name in provider_map:
+            if not pconfig.enabled:
+                continue
+            if self._provider_filter and name != self._provider_filter:
+                continue
+            if name in provider_map:
                 self._providers[name] = provider_map[name](pconfig)
 
     async def _refresh_all(self) -> None:
@@ -89,9 +98,18 @@ class QuotaDashApp(App):
 
         if selected and selected in self._providers:
             provider = self._providers[selected]
-            quota = await provider.get_quota()
-            tokens = await provider.get_token_usage()
-            context = await provider.get_context_window()
+            try:
+                quota = await provider.get_quota()
+                tokens = await provider.get_token_usage()
+                context = await provider.get_context_window()
+            except Exception as exc:
+                logger.error("Refresh failed for %s: %s", selected, exc)
+                self.notify(
+                    f"[b]Error[/b] refreshing {selected}: {exc}",
+                    severity="error",
+                    timeout=5,
+                )
+                return
 
             self._store.update_quota(selected, quota)
             self._store.update_tokens(selected, tokens)
