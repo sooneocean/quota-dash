@@ -32,3 +32,16 @@ class ContextInfo:
     percent_used: float
     model: str
     note: str = ""
+
+
+@dataclass
+class ProxyData:
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    ratelimit_remaining_tokens: int | None
+    ratelimit_remaining_requests: int | None
+    model: str | None
+    last_call: datetime
+    calls_today: int
+    tokens_today: int

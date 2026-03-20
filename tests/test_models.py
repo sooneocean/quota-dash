@@ -1,5 +1,5 @@
 from datetime import datetime
-from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo
+from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo, ProxyData
 
 
 def test_quota_info_creation():
@@ -76,3 +76,29 @@ def test_context_info_approximation():
         note="approximation — CLI logs lack per-turn data",
     )
     assert "approximation" in c.note
+
+
+def test_proxy_data_creation():
+    pd = ProxyData(
+        input_tokens=1500,
+        output_tokens=800,
+        total_tokens=2300,
+        ratelimit_remaining_tokens=50000,
+        ratelimit_remaining_requests=100,
+        model="gpt-4",
+        last_call=datetime(2026, 3, 21, 10, 0),
+        calls_today=15,
+        tokens_today=35000,
+    )
+    assert pd.total_tokens == 2300
+    assert pd.calls_today == 15
+
+
+def test_proxy_data_nullable_fields():
+    pd = ProxyData(
+        input_tokens=0, output_tokens=0, total_tokens=0,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        model=None, last_call=datetime(2026, 3, 21, 10, 0),
+        calls_today=0, tokens_today=0,
+    )
+    assert pd.model is None
