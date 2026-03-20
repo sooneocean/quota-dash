@@ -8,9 +8,8 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header
 
-from quota_dash.config import AppConfig, load_config
+from quota_dash.config import AppConfig
 from quota_dash.data.store import DataStore
-from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo
 from quota_dash.providers.anthropic import AnthropicProvider
 from quota_dash.providers.base import Provider
 from quota_dash.providers.openai import OpenAIProvider
@@ -73,13 +72,17 @@ class QuotaDashApp(App):
         provider_names = list(self._providers.keys())
         self.query_one(ProviderList).set_providers(provider_names)
         await self._refresh_all()
-        self.set_interval(self._config.polling_interval, self._refresh_all)
+        self.set_interval(self._config.polling_interval, self._poll)
 
     def _init_providers(self) -> None:
         provider_map = {"openai": OpenAIProvider, "anthropic": AnthropicProvider}
         for name, pconfig in self._config.providers.items():
             if pconfig.enabled and name in provider_map:
                 self._providers[name] = provider_map[name](pconfig)
+
+    def _poll(self) -> None:
+        """Sync wrapper for set_interval — schedules async refresh."""
+        self.run_worker(self._refresh_all())
 
     async def _refresh_all(self) -> None:
         plist = self.query_one(ProviderList)
@@ -113,11 +116,11 @@ class QuotaDashApp(App):
 
     def action_next_provider(self) -> None:
         self.query_one(ProviderList).select_next()
-        self.call_later(self._refresh_all)
+        self.run_worker(self._refresh_all())
 
     def action_prev_provider(self) -> None:
         self.query_one(ProviderList).select_prev()
-        self.call_later(self._refresh_all)
+        self.run_worker(self._refresh_all())
 
     def action_toggle_help(self) -> None:
         self.notify(

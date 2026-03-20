@@ -29,5 +29,5 @@ async def fetch_openai_usage(api_key: str) -> dict | None:
                 for r in results
             )
             return {"usage_usd": total}
-    except (httpx.HTTPError, KeyError, IndexError):
+    except (httpx.HTTPError, KeyError, IndexError, ValueError):
         return None

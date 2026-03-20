@@ -19,7 +19,15 @@ def parse_claude_costs_jsonl(path: Path) -> TokenUsage:
     history: list[tuple[datetime, int]] = []
     session_id: str | None = None
 
-    with open(path) as f:
+    try:
+        f = open(path)
+    except (OSError, PermissionError):
+        return TokenUsage(
+            input_tokens=0, output_tokens=0, total_tokens=0,
+            history=[], session_id=None, source="estimated",
+        )
+
+    with f:
         for line in f:
             line = line.strip()
             if not line:
