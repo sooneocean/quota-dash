@@ -17,11 +17,24 @@ class ProviderConfig:
 
 
 @dataclass
+class ProxyConfig:
+    enabled: bool = False
+    port: int = 8300
+    db_path: Path = field(default_factory=lambda: Path.home() / ".config" / "quota-dash" / "usage.db")
+    log_path: Path = field(default_factory=lambda: Path.home() / ".config" / "quota-dash" / "proxy.log")
+    targets: dict[str, str] = field(default_factory=lambda: {
+        "openai": "https://api.openai.com",
+        "anthropic": "https://api.anthropic.com",
+    })
+
+
+@dataclass
 class AppConfig:
     polling_interval: int = 60
     theme: str = "auto"
     mode: str = "dashboard"
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
+    proxy: ProxyConfig = field(default_factory=ProxyConfig)
 
 
 def load_config(path: Path | None) -> AppConfig:
@@ -45,9 +58,20 @@ def load_config(path: Path | None) -> AppConfig:
             limit_usd=prov.get("limit_usd"),
         )
 
+    proxy_raw = raw.get("proxy", {})
+    proxy_targets = proxy_raw.get("targets", {})
+    proxy = ProxyConfig(
+        enabled=proxy_raw.get("enabled", False),
+        port=proxy_raw.get("port", 8300),
+        db_path=Path(proxy_raw.get("db_path", "~/.config/quota-dash/usage.db")).expanduser(),
+        log_path=Path(proxy_raw.get("log_path", "~/.config/quota-dash/proxy.log")).expanduser(),
+        targets={**ProxyConfig().targets, **proxy_targets},
+    )
+
     return AppConfig(
         polling_interval=general.get("polling_interval", 60),
         theme=general.get("theme", "auto"),
         mode=general.get("mode", "dashboard"),
         providers=providers,
+        proxy=proxy,
     )
