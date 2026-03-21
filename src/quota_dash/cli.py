@@ -94,6 +94,8 @@ def main(
     path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
     config = load_config(path if path.exists() else None)
 
+    from quota_dash.plugins import discover_plugins
+
     provider_map_cls = {
         "openai": OpenAIProvider,
         "anthropic": AnthropicProvider,
@@ -101,6 +103,11 @@ def main(
         "groq": GroqProvider,
         "mistral": MistralProvider,
     }
+
+    # Merge plugin providers (plugins can override built-ins)
+    plugin_providers = discover_plugins()
+    provider_map_cls.update(plugin_providers)
+
     providers: dict[str, Provider] = {}
     db_path = config.proxy.db_path
     for name, pconfig in config.providers.items():
@@ -708,3 +715,30 @@ def export(ctx: click.Context, period: str, fmt: str, provider: str | None, outp
         click.echo(f"Exported {len(calls)} records to {output_path}")
     else:
         click.echo(result)
+
+
+@main.command()
+def plugins() -> None:
+    """List installed plugins."""
+    from quota_dash.plugins import discover_plugins, PLUGIN_DIR
+
+    console = Console()
+    found = discover_plugins()
+
+    if not found:
+        console.print(f"No plugins found in [bold]{PLUGIN_DIR}[/]")
+        console.print("\nTo create a plugin, add a .py file with a Provider subclass.")
+        console.print("See docs for examples.")
+        return
+
+    table = Table(show_header=True, header_style="bold cyan", border_style="dim")
+    table.add_column("Provider Name", style="bold")
+    table.add_column("Class")
+    table.add_column("File")
+
+    for name, cls in found.items():
+        source = getattr(cls, "__module__", "unknown")
+        table.add_row(name, cls.__name__, source)
+
+    console.print(table)
+    console.print(f"\n[dim]Plugin directory: {PLUGIN_DIR}[/]")

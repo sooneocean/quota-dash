@@ -131,6 +131,8 @@ class QuotaDashApp(App):
             self._watcher.stop()  # type: ignore[attr-defined]
 
     def _init_providers(self) -> None:
+        from quota_dash.plugins import discover_plugins
+
         provider_map = {
             "openai": OpenAIProvider,
             "anthropic": AnthropicProvider,
@@ -138,6 +140,11 @@ class QuotaDashApp(App):
             "groq": GroqProvider,
             "mistral": MistralProvider,
         }
+
+        # Merge plugin providers (plugins can override built-ins)
+        plugin_providers = discover_plugins()
+        provider_map.update(plugin_providers)
+
         db_path = self._config.proxy.db_path
         for name, pconfig in self._config.providers.items():
             if pconfig.enabled and name in provider_map:

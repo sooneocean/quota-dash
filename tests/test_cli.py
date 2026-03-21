@@ -450,3 +450,44 @@ db_path = "{db_path}"
     assert "my-replay-session" in result.output
     assert "openai" in result.output
     assert "gpt-4" in result.output
+
+
+def test_cli_plugins_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["plugins", "--help"])
+    assert result.exit_code == 0
+
+
+def test_cli_plugins_no_plugins(tmp_path, monkeypatch):
+    """plugins command with empty plugin dir reports no plugins found."""
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
+    runner = CliRunner()
+    result = runner.invoke(main, ["plugins"])
+    assert result.exit_code == 0
+    assert "No plugins" in result.output or "plugin" in result.output.lower()
+
+
+def test_cli_plugins_with_plugin(tmp_path, monkeypatch):
+    """plugins command discovers and lists a valid plugin."""
+    import quota_dash.plugins as plugins_mod
+
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir(parents=True)
+
+    plugin_code = '''
+from quota_dash.providers.base import ManualProvider
+
+class CliTestProvider(ManualProvider):
+    name = "cli-test"
+    _default_model = "cli-test-model"
+    _max_context = 16000
+'''
+    (plugin_dir / "cli_test.py").write_text(plugin_code)
+
+    # Patch discover_plugins to use our tmp dir so the CLI command picks it up
+    monkeypatch.setattr(plugins_mod, "PLUGIN_DIR", plugin_dir)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["plugins"])
+    assert result.exit_code == 0
+    assert "cli-test" in result.output
