@@ -92,7 +92,7 @@ def test_cli_config_init_help():
 def test_cli_config_init_creates_file(tmp_path):
     runner = CliRunner()
     output = tmp_path / "test_config.toml"
-    result = runner.invoke(main, ["config", "init", "--output", str(output)], input="y\ny\n\n\n\nn\nn\nn\ny\n8300\nn\n50\n20\n5\n")
+    result = runner.invoke(main, ["config", "init", "--output", str(output)], input="y\ny\n\n\n\n\n\n\n\n\n\ny\n8300\nn\n50\n20\n5\n")
     assert result.exit_code == 0
     assert output.exists()
 
