@@ -247,8 +247,9 @@ def proxy(ctx: click.Context) -> None:
 @proxy.command()
 @click.option("--port", default=8300, help="Proxy port")
 @click.option("--target", default=None, help="Only forward to this provider")
+@click.option("--session", default=None, help="Tag API calls with a session name")
 @click.pass_context
-def start(ctx: click.Context, port: int, target: str | None) -> None:
+def start(ctx: click.Context, port: int, target: str | None, session: str | None) -> None:
     """Start the proxy daemon."""
     from quota_dash.proxy.daemon import start_proxy
     config_path = ctx.obj.get("config_path") if ctx.obj else None
@@ -261,6 +262,7 @@ def start(ctx: click.Context, port: int, target: str | None) -> None:
         log_path=config.proxy.log_path,
         config_targets=config.proxy.targets,
         target_filter=target,
+        session_tag=session,
     )
 
 
@@ -339,6 +341,106 @@ def _fmt_tokens(n: int) -> str:
     elif n >= 1_000:
         return f"{n / 1_000:.1f}K"
     return str(n)
+
+
+@main.command()
+@click.option("--period", default="24h", help="Time period")
+@click.option("--config", "config_path", default=None, type=click.Path())
+def compare(period: str, config_path: str | None) -> None:
+    """Compare usage across providers."""
+    from rich.panel import Panel
+
+    path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
+    config = load_config(path if path.exists() else None)
+    db_path = config.proxy.db_path
+    if not db_path.exists():
+        click.echo("No proxy database found. Start proxy first.")
+        return
+
+    from quota_dash.export import query_calls
+    calls = asyncio.run(query_calls(db_path, period=period))
+
+    if not calls:
+        click.echo(f"No API calls in the last {period}.")
+        return
+
+    console = Console()
+
+    # Group by provider
+    providers: dict[str, dict] = {}
+    for c in calls:
+        prov = c.get("provider", "unknown")
+        if prov not in providers:
+            providers[prov] = {"calls": 0, "input": 0, "output": 0, "total": 0, "models": set()}
+        providers[prov]["calls"] += 1
+        providers[prov]["input"] += c.get("input_tokens", 0) or 0
+        providers[prov]["output"] += c.get("output_tokens", 0) or 0
+        providers[prov]["total"] += c.get("total_tokens", 0) or 0
+        if c.get("model"):
+            providers[prov]["models"].add(c["model"])
+
+    table = Table(show_header=True, header_style="bold cyan", border_style="dim")
+    table.add_column("Provider", style="bold")
+    table.add_column("Calls", justify="right")
+    table.add_column("Input", justify="right")
+    table.add_column("Output", justify="right")
+    table.add_column("Total", justify="right")
+    table.add_column("Avg/Call", justify="right")
+    table.add_column("Models")
+
+    for prov, stats in sorted(providers.items()):
+        avg = stats["total"] // stats["calls"] if stats["calls"] else 0
+        models_str = ", ".join(sorted(stats["models"]))
+        table.add_row(
+            prov,
+            str(stats["calls"]),
+            _fmt_tokens(stats["input"]),
+            _fmt_tokens(stats["output"]),
+            _fmt_tokens(stats["total"]),
+            _fmt_tokens(avg),
+            models_str or "—",
+        )
+
+    panel = Panel(table, title=f"[bold]Provider Comparison[/] [dim]({period})[/]", border_style="cyan")
+    console.print(panel)
+
+
+@main.command()
+@click.option("--config", "config_path", default=None, type=click.Path())
+def sessions(config_path: str | None) -> None:
+    """List tracked sessions."""
+    path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
+    config = load_config(path if path.exists() else None)
+    db_path = config.proxy.db_path
+    if not db_path.exists():
+        click.echo("No proxy database found.")
+        return
+
+    from quota_dash.proxy.db import query_sessions
+    result = asyncio.run(query_sessions(db_path))
+
+    if not result:
+        click.echo("No sessions found. Use: quota-dash proxy start --session 'my-session'")
+        return
+
+    console = Console()
+    table = Table(show_header=True, header_style="bold cyan", border_style="dim")
+    table.add_column("Session", style="bold")
+    table.add_column("Calls", justify="right")
+    table.add_column("Tokens", justify="right")
+    table.add_column("Started")
+    table.add_column("Ended")
+
+    for s in result:
+        table.add_row(
+            s["session_tag"],
+            str(s["calls"]),
+            _fmt_tokens(s["tokens"] or 0),
+            str(s["started"] or "—")[:16],
+            str(s["ended"] or "—")[:16],
+        )
+
+    console.print(table)
 
 
 @main.command()

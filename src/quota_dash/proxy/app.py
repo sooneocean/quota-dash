@@ -24,9 +24,11 @@ def create_proxy_app(
     db_path: Path,
     config_targets: dict[str, str] | None = None,
     target_filter: str | None = None,
+    session_tag: str | None = None,
 ) -> Starlette:
     _routes = build_routes(config_targets)
     _db_path = db_path
+    _session_tag = session_tag
 
     async def startup():
         await init_db(_db_path)
@@ -82,6 +84,7 @@ def create_proxy_app(
                     await resp.aclose()
                     await client.aclose()
                     record = buf.extract_usage(resp_headers, endpoint=path, target_url=target_url)
+                    record.session_tag = _session_tag
                     try:
                         await write_api_call(_db_path, record)
                     except Exception:
@@ -104,6 +107,7 @@ def create_proxy_app(
                 body_json = {}
 
             record = extract_usage(body_json, resp_headers, endpoint=path, target_url=target_url)
+            record.session_tag = _session_tag
             asyncio.create_task(_safe_write(_db_path, record))
 
             return Response(

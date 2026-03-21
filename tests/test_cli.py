@@ -232,3 +232,147 @@ def test_cli_proxy_uninstall_with_service(tmp_path, monkeypatch):
     assert "uninstalled" in result.output.lower()
     assert not plist_path.exists()
     assert any("launchctl" in str(c) for c in calls)
+
+
+def test_cli_compare_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["compare", "--help"])
+    assert result.exit_code == 0
+    assert "--period" in result.output
+
+
+def test_cli_compare_no_db(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
+    runner = CliRunner()
+    result = runner.invoke(main, ["compare"])
+    assert result.exit_code == 0
+
+
+def test_cli_sessions_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["sessions", "--help"])
+    assert result.exit_code == 0
+
+
+def test_cli_sessions_no_db(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
+    runner = CliRunner()
+    result = runner.invoke(main, ["sessions"])
+    assert result.exit_code == 0
+
+
+def test_cli_proxy_start_session_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "start", "--help"])
+    assert result.exit_code == 0
+    assert "--session" in result.output
+
+
+def test_cli_compare_with_data(tmp_path):
+    """compare command with populated DB should show provider table."""
+    import asyncio
+    from quota_dash.proxy.db import init_db, write_api_call, ApiCallRecord
+
+    db_path = tmp_path / "usage.db"
+    asyncio.run(init_db(db_path))
+    for model, prov in [("gpt-4", "openai"), ("claude-opus-4-6", "anthropic")]:
+        asyncio.run(write_api_call(db_path, ApiCallRecord(
+            provider=prov, model=model, endpoint="/v1/test",
+            input_tokens=100, output_tokens=50, total_tokens=150,
+            ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+            ratelimit_reset=None, request_id=None, target_url="https://example.com",
+        )))
+
+    config_content = f"""\
+[general]
+polling_interval = 60
+theme = "default"
+[proxy]
+db_path = "{db_path}"
+"""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(config_content)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["compare", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert "openai" in result.output or "Provider" in result.output
+
+
+def test_cli_compare_no_calls(tmp_path):
+    """compare with DB but no recent calls should report empty."""
+    import asyncio
+    from quota_dash.proxy.db import init_db
+
+    db_path = tmp_path / "usage.db"
+    asyncio.run(init_db(db_path))
+
+    config_content = f"""\
+[general]
+polling_interval = 60
+theme = "default"
+[proxy]
+db_path = "{db_path}"
+"""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(config_content)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["compare", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert "No API calls" in result.output
+
+
+def test_cli_sessions_with_data(tmp_path):
+    """sessions command with tagged calls should list them."""
+    import asyncio
+    from quota_dash.proxy.db import init_db, write_api_call, ApiCallRecord
+
+    db_path = tmp_path / "usage.db"
+    asyncio.run(init_db(db_path))
+    asyncio.run(write_api_call(db_path, ApiCallRecord(
+        provider="openai", model="gpt-4", endpoint="/v1/test",
+        input_tokens=100, output_tokens=50, total_tokens=150,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        ratelimit_reset=None, request_id=None, target_url="https://example.com",
+        session_tag="my-session",
+    )))
+
+    config_content = f"""\
+[general]
+polling_interval = 60
+theme = "default"
+[proxy]
+db_path = "{db_path}"
+"""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(config_content)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["sessions", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert "my-session" in result.output
+
+
+def test_cli_sessions_empty_db(tmp_path):
+    """sessions command with DB but no sessions should say none found."""
+    import asyncio
+    from quota_dash.proxy.db import init_db
+
+    db_path = tmp_path / "usage.db"
+    asyncio.run(init_db(db_path))
+
+    config_content = f"""\
+[general]
+polling_interval = 60
+theme = "default"
+[proxy]
+db_path = "{db_path}"
+"""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(config_content)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["sessions", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert "No sessions" in result.output

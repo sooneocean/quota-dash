@@ -198,3 +198,12 @@ async def test_app_time_range_switch():
         assert app._time_range == "7d"
         await pilot.press("2")
         assert app._time_range == "24h"
+
+
+@pytest.mark.asyncio
+async def test_app_theme_toggle():
+    app = QuotaDashApp()
+    async with app.run_test() as pilot:
+        initial_theme = app.theme
+        await pilot.press("t")
+        assert app.theme != initial_theme

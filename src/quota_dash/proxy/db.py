@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS api_calls (
     ratelimit_remaining_requests INTEGER,
     ratelimit_reset TEXT,
     request_id TEXT,
-    target_url TEXT
+    target_url TEXT,
+    session_tag TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_api_calls_timestamp ON api_calls(timestamp);
 CREATE INDEX IF NOT EXISTS idx_api_calls_provider ON api_calls(provider);
@@ -47,6 +48,16 @@ class ApiCallRecord:
     ratelimit_reset: str | None
     request_id: str | None
     target_url: str | None
+    session_tag: str | None = None
+
+
+async def _migrate_session_column(db: object) -> None:
+    """Add session_tag column if it doesn't exist."""
+    cursor = await db.execute("PRAGMA table_info(api_calls)")
+    columns = [row[1] for row in await cursor.fetchall()]
+    if "session_tag" not in columns:
+        await db.execute("ALTER TABLE api_calls ADD COLUMN session_tag TEXT")
+        await db.commit()
 
 
 async def init_db(db_path: Path) -> None:
@@ -62,6 +73,7 @@ async def init_db(db_path: Path) -> None:
         if count == 0:
             await db.execute("INSERT INTO schema_version VALUES (1)")
         await db.commit()
+        await _migrate_session_column(db)
 
 
 async def write_api_call(db_path: Path, record: ApiCallRecord) -> None:
@@ -75,13 +87,14 @@ async def write_api_call(db_path: Path, record: ApiCallRecord) -> None:
                    (provider, model, endpoint, input_tokens, output_tokens,
                     total_tokens, ratelimit_remaining_tokens,
                     ratelimit_remaining_requests, ratelimit_reset,
-                    request_id, target_url)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    request_id, target_url, session_tag)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     record.provider, record.model, record.endpoint,
                     record.input_tokens, record.output_tokens, record.total_tokens,
                     record.ratelimit_remaining_tokens, record.ratelimit_remaining_requests,
                     record.ratelimit_reset, record.request_id, record.target_url,
+                    record.session_tag,
                 ),
             )
             await db.commit()
@@ -197,3 +210,23 @@ async def query_token_history(
     except Exception:
         logger.exception("Failed to query token history")
         return []
+
+
+async def query_sessions(db_path: Path) -> list[dict]:
+    """Get unique session tags with stats."""
+    if not _HAS_AIOSQLITE:
+        return []
+    import aiosqlite
+    async with aiosqlite.connect(db_path) as db:
+        await _migrate_session_column(db)
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            """SELECT session_tag, COUNT(*) as calls,
+                      SUM(total_tokens) as tokens,
+                      MIN(timestamp) as started, MAX(timestamp) as ended
+               FROM api_calls
+               WHERE session_tag IS NOT NULL
+               GROUP BY session_tag
+               ORDER BY started DESC"""
+        )
+        return [dict(row) for row in await cursor.fetchall()]

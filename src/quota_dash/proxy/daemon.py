@@ -24,6 +24,7 @@ def start_proxy(
     config_targets: dict[str, str] | None = None,
     target_filter: str | None = None,
     foreground: bool = False,
+    session_tag: str | None = None,
 ) -> None:
     db = db_path or Path.home() / ".config" / "quota-dash" / "usage.db"
     log = log_path or Path.home() / ".config" / "quota-dash" / "proxy.log"
@@ -51,7 +52,12 @@ def start_proxy(
     pid_file.parent.mkdir(parents=True, exist_ok=True)
     pid_file.write_text(str(os.getpid()))
 
-    app = create_proxy_app(db_path=db, config_targets=config_targets, target_filter=target_filter)
+    app = create_proxy_app(
+        db_path=db,
+        config_targets=config_targets,
+        target_filter=target_filter,
+        session_tag=session_tag,
+    )
 
     try:
         uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")

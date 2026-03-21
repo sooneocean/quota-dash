@@ -4,7 +4,7 @@ import pytest
 
 from quota_dash.proxy.db import (
     init_db, write_api_call, query_provider_data,
-    query_recent_calls, query_token_history, ApiCallRecord,
+    query_recent_calls, query_token_history, query_sessions, ApiCallRecord,
 )
 
 
@@ -148,3 +148,66 @@ async def test_query_recent_calls_with_period(db_path):
 
     calls_7d = await query_recent_calls(db_path, "openai", limit=20, period="7d")
     assert len(calls_7d) >= 1
+
+
+@pytest.mark.asyncio
+async def test_session_tag_migration(db_path):
+    await init_db(db_path)
+    # Write with session tag
+    record = ApiCallRecord(
+        provider="openai", model="gpt-4", endpoint="/v1/chat/completions",
+        input_tokens=100, output_tokens=50, total_tokens=150,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        ratelimit_reset=None, request_id=None, target_url="https://api.openai.com",
+        session_tag="feature-x",
+    )
+    await write_api_call(db_path, record)
+
+    sessions = await query_sessions(db_path)
+    assert len(sessions) == 1
+    assert sessions[0]["session_tag"] == "feature-x"
+
+
+@pytest.mark.asyncio
+async def test_session_tag_none_not_in_sessions(db_path):
+    await init_db(db_path)
+    # Write without session tag
+    record = ApiCallRecord(
+        provider="openai", model="gpt-4", endpoint="/v1/chat/completions",
+        input_tokens=100, output_tokens=50, total_tokens=150,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        ratelimit_reset=None, request_id=None, target_url="https://api.openai.com",
+    )
+    await write_api_call(db_path, record)
+
+    sessions = await query_sessions(db_path)
+    assert len(sessions) == 0
+
+
+@pytest.mark.asyncio
+async def test_query_sessions_empty(db_path):
+    await init_db(db_path)
+    sessions = await query_sessions(db_path)
+    assert sessions == []
+
+
+@pytest.mark.asyncio
+async def test_session_tag_multiple_sessions(db_path):
+    await init_db(db_path)
+    for tag in ["alpha", "beta", "alpha"]:
+        record = ApiCallRecord(
+            provider="anthropic", model="claude-opus-4-6", endpoint="/v1/messages",
+            input_tokens=50, output_tokens=25, total_tokens=75,
+            ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+            ratelimit_reset=None, request_id=None, target_url="https://api.anthropic.com",
+            session_tag=tag,
+        )
+        await write_api_call(db_path, record)
+
+    sessions = await query_sessions(db_path)
+    assert len(sessions) == 2
+    session_tags = {s["session_tag"] for s in sessions}
+    assert "alpha" in session_tags
+    assert "beta" in session_tags
+    alpha = next(s for s in sessions if s["session_tag"] == "alpha")
+    assert alpha["calls"] == 2

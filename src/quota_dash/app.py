@@ -37,6 +37,7 @@ class QuotaDashApp(App):
         Binding("r", "refresh", "Refresh"),
         Binding("tab", "focus_next", "Next Panel", show=False),
         Binding("question_mark", "toggle_help", "Help"),
+        Binding("t", "toggle_theme", "Theme", show=False),
         Binding("1", "set_range_1h", "1h", show=False),
         Binding("2", "set_range_24h", "24h", show=False),
         Binding("3", "set_range_7d", "7d", show=False),
@@ -272,6 +273,15 @@ class QuotaDashApp(App):
     async def action_refresh(self) -> None:
         await self._refresh_all()
 
+    def action_toggle_theme(self) -> None:
+        """Toggle between light and dark theme."""
+        if self.theme == "textual-light":
+            self.theme = "textual-dark"
+            self.notify("Theme: dark", timeout=2)
+        else:
+            self.theme = "textual-light"
+            self.notify("Theme: light", timeout=2)
+
     def action_toggle_help(self) -> None:
         self.notify(
             "[b]Keybindings[/b]\n"
@@ -279,6 +289,7 @@ class QuotaDashApp(App):
             "r   Refresh\n"
             "Tab Focus next panel\n"
             "1/2/3 Time range (1h/24h/7d)\n"
+            "t   Toggle theme\n"
             "q   Quit\n"
             "?   This help",
             title="Help",
