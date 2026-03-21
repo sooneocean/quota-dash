@@ -317,6 +317,109 @@ def _fmt_tokens(n: int) -> str:
 
 
 @main.command()
+@click.option("--config", "config_path", default=None, type=click.Path(), help="Config file path")
+def doctor(config_path: str | None) -> None:
+    """Check quota-dash configuration and connectivity."""
+    import os
+    import sqlite3
+
+    from quota_dash.proxy.daemon import proxy_status
+
+    console = Console()
+    console.print("\n[bold]quota-dash doctor[/]\n")
+
+    checks = []
+
+    # 1. Config file
+    path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
+    if path.exists():
+        checks.append(("Config file", "OK", f"{path}"))
+        config = load_config(path)
+    else:
+        checks.append(("Config file", "MISSING", f"{path} not found. Run: quota-dash config init"))
+        config = load_config(None)
+
+    # 2. Providers configured
+    enabled = [n for n, p in config.providers.items() if p.enabled]
+    if enabled:
+        checks.append(("Providers", "OK", ", ".join(enabled)))
+    else:
+        checks.append(("Providers", "WARN", "No providers configured"))
+
+    # 3. API keys in environment
+    for name, pconfig in config.providers.items():
+        if pconfig.enabled and pconfig.api_key_env:
+            val = os.environ.get(pconfig.api_key_env, "")
+            if val:
+                checks.append((f"  {name} API key", "OK", f"${pconfig.api_key_env} is set"))
+            else:
+                checks.append((f"  {name} API key", "WARN", f"${pconfig.api_key_env} not set"))
+
+    # 4. Proxy database
+    db_path = config.proxy.db_path
+    if db_path.exists():
+        try:
+            conn = sqlite3.connect(db_path)
+            count = conn.execute("SELECT COUNT(*) FROM api_calls").fetchone()[0]
+            conn.close()
+            checks.append(("Proxy database", "OK", f"{db_path} ({count} records)"))
+        except Exception as e:
+            checks.append(("Proxy database", "ERROR", f"Cannot read: {e}"))
+    else:
+        checks.append(("Proxy database", "MISSING", "Run: quota-dash proxy start"))
+
+    # 5. Proxy process
+    status = proxy_status()
+    if status:
+        checks.append(("Proxy process", "OK", f"Running (PID {status['pid']})"))
+    else:
+        checks.append(("Proxy process", "STOPPED", "Not running. Run: quota-dash proxy start"))
+
+    # 6. Ghostty detection
+    term = os.environ.get("TERM_PROGRAM", "unknown")
+    if term == "ghostty":
+        checks.append(("Terminal", "OK", "Ghostty detected — enhanced features active"))
+    else:
+        checks.append(("Terminal", "INFO", f"{term} — Ghostty features unavailable"))
+
+    # 7. Alert webhook
+    if config.alerts.webhook_url:
+        checks.append(("Webhook", "OK", config.alerts.webhook_url[:50] + "..."))
+    else:
+        checks.append(("Webhook", "INFO", "Not configured"))
+
+    # Display results
+    table = Table(show_header=True, header_style="bold", border_style="dim")
+    table.add_column("Check", style="bold")
+    table.add_column("Status")
+    table.add_column("Details")
+
+    status_styles = {
+        "OK": "[green]OK[/]",
+        "WARN": "[yellow]WARN[/]",
+        "ERROR": "[red]ERROR[/]",
+        "MISSING": "[red]MISSING[/]",
+        "STOPPED": "[yellow]STOPPED[/]",
+        "INFO": "[dim]INFO[/]",
+    }
+
+    for check_name, check_status, details in checks:
+        styled_status = status_styles.get(check_status, check_status)
+        table.add_row(check_name, styled_status, details)
+
+    console.print(table)
+
+    errors = sum(1 for _, s, _ in checks if s in ("ERROR", "MISSING"))
+    warns = sum(1 for _, s, _ in checks if s in ("WARN", "STOPPED"))
+    if errors:
+        console.print(f"\n[red]{errors} error(s) found.[/]")
+    elif warns:
+        console.print(f"\n[yellow]{warns} warning(s).[/] See details above.")
+    else:
+        console.print("\n[green]All checks passed![/]")
+
+
+@main.command()
 @click.option("--period", default="24h", help="Time period: 1h, 24h, 7d, 30d")
 @click.option("--config", "config_path", default=None, type=click.Path(), help="Config file path")
 def stats(period: str, config_path: str | None) -> None:
