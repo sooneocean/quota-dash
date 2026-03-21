@@ -299,3 +299,38 @@ def uninstall() -> None:
     subprocess.run(["launchctl", "unload", str(plist_path)], check=False)
     plist_path.unlink()
     click.echo("Proxy service uninstalled.")
+
+
+@main.command()
+@click.option("--period", default="24h", help="Time period: 24h, 7d, 30d")
+@click.option("--format", "fmt", default="csv", type=click.Choice(["csv", "json"]), help="Output format")
+@click.option("--provider", default=None, help="Filter by provider")
+@click.option("--output", "output_path", default=None, type=click.Path(), help="Output file (default: stdout)")
+@click.pass_context
+def export(ctx: click.Context, period: str, fmt: str, provider: str | None, output_path: str | None) -> None:
+    """Export usage data from proxy database."""
+    import asyncio
+    from quota_dash.export import query_calls, build_summary, format_csv, format_json
+
+    config_path_str = ctx.obj.get("config_path") if ctx.obj else None
+    path = Path(config_path_str) if config_path_str else Path.home() / ".config" / "quota-dash" / "config.toml"
+    config = load_config(path if path.exists() else None)
+
+    db_path = config.proxy.db_path
+    if not db_path.exists():
+        click.echo("No proxy database found. Start the proxy first: quota-dash proxy start")
+        return
+
+    calls = asyncio.run(query_calls(db_path, period=period, provider=provider))
+    summary = build_summary(calls, period)
+
+    if fmt == "json":
+        result = format_json(calls, summary)
+    else:
+        result = format_csv(calls, summary)
+
+    if output_path:
+        Path(output_path).write_text(result)
+        click.echo(f"Exported {len(calls)} records to {output_path}")
+    else:
+        click.echo(result)
