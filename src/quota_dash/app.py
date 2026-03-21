@@ -12,6 +12,9 @@ from quota_dash.config import AppConfig
 from quota_dash.data.store import DataStore
 from quota_dash.providers.anthropic import AnthropicProvider
 from quota_dash.providers.base import Provider
+from quota_dash.providers.google import GoogleProvider
+from quota_dash.providers.groq import GroqProvider
+from quota_dash.providers.mistral import MistralProvider
 from quota_dash.providers.openai import OpenAIProvider
 from quota_dash.widgets.overview_table import OverviewTable
 from quota_dash.widgets.detail_panel import DetailPanel
@@ -98,7 +101,13 @@ class QuotaDashApp(App):
             self._watcher.stop()  # type: ignore[attr-defined]
 
     def _init_providers(self) -> None:
-        provider_map = {"openai": OpenAIProvider, "anthropic": AnthropicProvider}
+        provider_map = {
+            "openai": OpenAIProvider,
+            "anthropic": AnthropicProvider,
+            "google": GoogleProvider,
+            "groq": GroqProvider,
+            "mistral": MistralProvider,
+        }
         db_path = self._config.proxy.db_path
         for name, pconfig in self._config.providers.items():
             if pconfig.enabled and name in provider_map:

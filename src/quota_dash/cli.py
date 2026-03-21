@@ -14,6 +14,9 @@ from rich.table import Table
 from quota_dash.config import load_config
 from quota_dash.providers.anthropic import AnthropicProvider
 from quota_dash.providers.base import Provider
+from quota_dash.providers.google import GoogleProvider
+from quota_dash.providers.groq import GroqProvider
+from quota_dash.providers.mistral import MistralProvider
 from quota_dash.providers.openai import OpenAIProvider
 
 
@@ -91,7 +94,13 @@ def main(
     path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
     config = load_config(path if path.exists() else None)
 
-    provider_map_cls = {"openai": OpenAIProvider, "anthropic": AnthropicProvider}
+    provider_map_cls = {
+        "openai": OpenAIProvider,
+        "anthropic": AnthropicProvider,
+        "google": GoogleProvider,
+        "groq": GroqProvider,
+        "mistral": MistralProvider,
+    }
     providers: dict[str, Provider] = {}
     db_path = config.proxy.db_path
     for name, pconfig in config.providers.items():
