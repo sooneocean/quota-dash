@@ -18,6 +18,8 @@ class StreamingBuffer:
         # Anthropic: split across events
         self._anthropic_input_tokens: int | None = None
         self._anthropic_output_tokens: int | None = None
+        # Google: usageMetadata in any chunk
+        self._google_usage: dict | None = None
         self._model: str | None = None
 
     def feed_line(self, line: str) -> None:
@@ -63,6 +65,10 @@ class StreamingBuffer:
             if "output_tokens" in usage:
                 self._anthropic_output_tokens = usage["output_tokens"]
 
+        # Google: usageMetadata in any chunk
+        if "usageMetadata" in data:
+            self._google_usage = data["usageMetadata"]
+
     def extract_usage(
         self,
         headers: dict,
@@ -101,6 +107,23 @@ class StreamingBuffer:
                 ratelimit_remaining_requests=_safe_int(headers.get("anthropic-ratelimit-requests-remaining")),
                 ratelimit_reset=None,
                 request_id=headers.get("request-id"),
+                target_url=target_url,
+            )
+
+        # Google streaming
+        if self._google_usage is not None:
+            u = self._google_usage
+            return ApiCallRecord(
+                provider="google",
+                model=self._model,
+                endpoint=endpoint,
+                input_tokens=u.get("promptTokenCount", 0),
+                output_tokens=u.get("candidatesTokenCount", 0),
+                total_tokens=u.get("totalTokenCount", 0),
+                ratelimit_remaining_tokens=None,
+                ratelimit_remaining_requests=None,
+                ratelimit_reset=None,
+                request_id=None,
                 target_url=target_url,
             )
 

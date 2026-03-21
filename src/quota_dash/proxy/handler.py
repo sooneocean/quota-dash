@@ -5,6 +5,7 @@ DEFAULT_ROUTES: dict[str, str] = {
     "/v1/chat/completions": "https://api.openai.com",
     "/v1/completions": "https://api.openai.com",
     "/v1/embeddings": "https://api.openai.com",
+    "/v1beta/models": "https://generativelanguage.googleapis.com",
 }
 
 # Maps path prefix -> which config target key it belongs to
@@ -13,6 +14,7 @@ _PATH_TO_PROVIDER: dict[str, str] = {
     "/v1/chat/completions": "openai",
     "/v1/completions": "openai",
     "/v1/embeddings": "openai",
+    "/v1beta/models": "google",
 }
 
 

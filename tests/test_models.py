@@ -102,3 +102,13 @@ def test_proxy_data_nullable_fields():
         calls_today=0, tokens_today=0,
     )
     assert pd.model is None
+
+
+def test_proxy_data_with_ratelimit_reset():
+    pd = ProxyData(
+        input_tokens=100, output_tokens=50, total_tokens=150,
+        ratelimit_remaining_tokens=9000, ratelimit_remaining_requests=99,
+        model="gpt-4", last_call=datetime(2026, 3, 21, 10, 0),
+        calls_today=5, tokens_today=1500, ratelimit_reset="2m 30s",
+    )
+    assert pd.ratelimit_reset == "2m 30s"

@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0] - 2026-03-21
+
+### Added
+- Google AI (Gemini), Groq, and Mistral provider support
+- Configurable alert thresholds via `[alerts]` config section
+- Interactive config wizard (`quota-dash config init`)
+- Proxy auto-start (`[proxy] auto_start = true`)
+- macOS launchd service install/uninstall (`quota-dash proxy install/uninstall`)
+- Usage data export (`quota-dash export --format csv/json --period 7d`)
+- Usage statistics command (`quota-dash stats`)
+- Webhook notifications for Slack/Discord/generic endpoints
+- Dashboard time range switching (1h/24h/7d with keyboard shortcuts 1/2/3)
+- Event-driven real-time monitoring via SQLite file watching
+- MkDocs Material documentation site
+
+### Changed
+- Provider refresh parallelized with asyncio.gather
+- Test coverage improved from 82% to 93%+ (224 tests)
+
+### Fixed
+- Code quality: ruff linter + mypy type checking enforced in CI
+- CI coverage threshold set to 90%
+
 ## [0.5.0] - 2026-03-21
 
 ### Added

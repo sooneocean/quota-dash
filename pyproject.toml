@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "quota-dash"
-version = "0.5.0"
+version = "1.0.0"
 description = "Multi-provider LLM quota monitoring TUI dashboard targeting Ghostty"
 readme = "README.md"
 license = {text = "MIT"}

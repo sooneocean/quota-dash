@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from quota_dash.data.store import DataStore
-from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo
+from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo, ProxyData
 
 
 def test_store_update_provider():
@@ -50,3 +50,42 @@ def test_store_aggregate_skips_none():
     ))
     assert store.total_balance() == 47.32
     assert store.total_usage_today() == 3.20
+
+
+def test_store_update_and_get_proxy():
+    store = DataStore()
+    pd = ProxyData(
+        input_tokens=100, output_tokens=50, total_tokens=150,
+        ratelimit_remaining_tokens=9000, ratelimit_remaining_requests=99,
+        model="gpt-4", last_call=datetime.now(),
+        calls_today=5, tokens_today=1500,
+    )
+    store.update_proxy("openai", pd)
+    assert store.get_proxy("openai") == pd
+    assert store.get_proxy("missing") is None
+
+
+def test_store_total_tokens_today():
+    store = DataStore()
+    store.update_proxy("openai", ProxyData(
+        input_tokens=0, output_tokens=0, total_tokens=0,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        model=None, last_call=datetime.now(),
+        calls_today=5, tokens_today=1500,
+    ))
+    store.update_proxy("anthropic", ProxyData(
+        input_tokens=0, output_tokens=0, total_tokens=0,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        model=None, last_call=datetime.now(),
+        calls_today=3, tokens_today=2000,
+    ))
+    assert store.total_tokens_today() == 3500
+
+
+def test_store_total_tokens_today_no_proxy():
+    store = DataStore()
+    store.update_tokens("openai", TokenUsage(
+        input_tokens=500, output_tokens=200, total_tokens=700,
+        history=[], session_id=None, source="estimated",
+    ))
+    assert store.total_tokens_today() == 700

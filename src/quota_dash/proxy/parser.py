@@ -12,6 +12,9 @@ def detect_provider(body: dict) -> str:
         return "anthropic"
     if "choices" in body and "prompt_tokens" in body.get("usage", {}):
         return "openai"
+    # Google: has "candidates" and "usageMetadata"
+    if "candidates" in body and "usageMetadata" in body:
+        return "google"
     return "unknown"
 
 
@@ -47,6 +50,14 @@ def extract_usage(
         request_id = headers.get("request-id")
         rl_tokens = _safe_int(headers.get("anthropic-ratelimit-tokens-remaining"))
         rl_requests = _safe_int(headers.get("anthropic-ratelimit-requests-remaining"))
+    elif provider == "google":
+        usage_meta = body.get("usageMetadata", {})
+        input_tokens = usage_meta.get("promptTokenCount", 0)
+        output_tokens = usage_meta.get("candidatesTokenCount", 0)
+        total_tokens = usage_meta.get("totalTokenCount", 0)
+        request_id = None
+        rl_tokens = None
+        rl_requests = None
     else:
         input_tokens = 0
         output_tokens = 0
@@ -58,9 +69,11 @@ def extract_usage(
         )
         rl_requests = None
 
+    model = body.get("model") or (body.get("modelVersion") if provider == "google" else None)
+
     return ApiCallRecord(
         provider=provider,
-        model=body.get("model"),
+        model=model,
         endpoint=endpoint,
         input_tokens=input_tokens,
         output_tokens=output_tokens,

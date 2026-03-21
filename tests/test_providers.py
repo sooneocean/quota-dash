@@ -8,6 +8,7 @@ import pytest
 from quota_dash.config import ProviderConfig
 from quota_dash.providers.openai import OpenAIProvider
 from quota_dash.providers.anthropic import AnthropicProvider
+from quota_dash.proxy.db import init_db, write_api_call, ApiCallRecord
 
 
 @pytest.mark.asyncio
@@ -92,3 +93,48 @@ async def test_anthropic_get_token_usage_from_log():
         assert tokens.input_tokens == 1000
         assert tokens.output_tokens == 500
         assert tokens.source == "log"
+
+
+@pytest.mark.asyncio
+async def test_openai_get_token_usage_from_proxy(tmp_path):
+    db_path = tmp_path / "usage.db"
+    await init_db(db_path)
+    await write_api_call(db_path, ApiCallRecord(
+        provider="openai", model="gpt-4", endpoint="/v1/chat/completions",
+        input_tokens=500, output_tokens=200, total_tokens=700,
+        ratelimit_remaining_tokens=9000, ratelimit_remaining_requests=99,
+        ratelimit_reset=None, request_id="r-1",
+        target_url="https://api.openai.com/v1/chat/completions",
+    ))
+    config = ProviderConfig(enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp/nonexistent"))
+    provider = OpenAIProvider(config, db_path=db_path)
+    tokens = await provider.get_token_usage()
+    assert tokens.input_tokens == 500
+    assert tokens.output_tokens == 200
+    assert tokens.source == "proxy"
+
+
+@pytest.mark.asyncio
+async def test_openai_falls_back_without_proxy():
+    config = ProviderConfig(enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp/nonexistent"))
+    provider = OpenAIProvider(config, db_path=None)
+    tokens = await provider.get_token_usage()
+    assert tokens.source == "estimated"
+
+
+@pytest.mark.asyncio
+async def test_anthropic_get_token_usage_from_proxy(tmp_path):
+    db_path = tmp_path / "usage.db"
+    await init_db(db_path)
+    await write_api_call(db_path, ApiCallRecord(
+        provider="anthropic", model="claude-opus-4-6", endpoint="/v1/messages",
+        input_tokens=1000, output_tokens=400, total_tokens=1400,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        ratelimit_reset=None, request_id=None,
+        target_url="https://api.anthropic.com/v1/messages",
+    ))
+    config = ProviderConfig(enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp/nonexistent"))
+    provider = AnthropicProvider(config, db_path=db_path)
+    tokens = await provider.get_token_usage()
+    assert tokens.input_tokens == 1000
+    assert tokens.source == "proxy"
