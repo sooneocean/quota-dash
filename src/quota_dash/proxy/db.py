@@ -1,19 +1,16 @@
 from __future__ import annotations
 
+import importlib.util as _ilu
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from quota_dash.models import ProxyData
+
 logger = logging.getLogger(__name__)
 
-try:
-    import aiosqlite as _aiosqlite
-    _HAS_AIOSQLITE = True
-except ImportError:
-    _HAS_AIOSQLITE = False
-
-from quota_dash.models import ProxyData
+_HAS_AIOSQLITE = _ilu.find_spec("aiosqlite") is not None
 
 SCHEMA = """\
 CREATE TABLE IF NOT EXISTS api_calls (
@@ -60,7 +57,8 @@ async def init_db(db_path: Path) -> None:
     async with aiosqlite.connect(db_path) as db:
         await db.executescript(SCHEMA)
         cursor = await db.execute("SELECT COUNT(*) FROM schema_version")
-        count = (await cursor.fetchone())[0]
+        fetched = await cursor.fetchone()
+        count = fetched[0] if fetched is not None else 0
         if count == 0:
             await db.execute("INSERT INTO schema_version VALUES (1)")
         await db.commit()
@@ -101,7 +99,7 @@ async def query_provider_data(db_path: Path, provider: str) -> ProxyData | None:
             cursor = await db.execute(
                 """SELECT input_tokens, output_tokens, total_tokens,
                           ratelimit_remaining_tokens, ratelimit_remaining_requests,
-                          model, timestamp
+                          ratelimit_reset, model, timestamp
                    FROM api_calls WHERE provider = ?
                    ORDER BY timestamp DESC, id DESC LIMIT 1""",
                 (provider,),
@@ -124,11 +122,52 @@ async def query_provider_data(db_path: Path, provider: str) -> ProxyData | None:
                 total_tokens=row["total_tokens"],
                 ratelimit_remaining_tokens=row["ratelimit_remaining_tokens"],
                 ratelimit_remaining_requests=row["ratelimit_remaining_requests"],
+                ratelimit_reset=row["ratelimit_reset"],
                 model=row["model"],
                 last_call=datetime.fromisoformat(row["timestamp"]),
-                calls_today=agg["cnt"],
-                tokens_today=agg["total"],
+                calls_today=agg["cnt"] if agg is not None else 0,
+                tokens_today=agg["total"] if agg is not None else 0,
             )
     except Exception:
         logger.exception("Failed to query provider data")
         return None
+
+
+async def query_recent_calls(db_path: Path, provider: str, limit: int = 20) -> list[dict]:
+    if not _HAS_AIOSQLITE:
+        return []
+    try:
+        import aiosqlite
+        async with aiosqlite.connect(db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """SELECT timestamp, model, total_tokens, endpoint
+                   FROM api_calls WHERE provider = ?
+                   AND date(timestamp) = date('now')
+                   ORDER BY timestamp DESC LIMIT ?""",
+                (provider, limit),
+            )
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+    except Exception:
+        logger.exception("Failed to query recent calls")
+        return []
+
+
+async def query_token_history(db_path: Path, provider: str, limit: int = 50) -> list[tuple[datetime, int]]:
+    if not _HAS_AIOSQLITE:
+        return []
+    try:
+        import aiosqlite
+        async with aiosqlite.connect(db_path) as db:
+            cursor = await db.execute(
+                """SELECT timestamp, total_tokens
+                   FROM api_calls WHERE provider = ?
+                   ORDER BY timestamp DESC LIMIT ?""",
+                (provider, limit),
+            )
+            rows = await cursor.fetchall()
+            return [(datetime.fromisoformat(ts), tok) for ts, tok in reversed(list(rows))]
+    except Exception:
+        logger.exception("Failed to query token history")
+        return []

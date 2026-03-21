@@ -42,11 +42,12 @@ class QuotaDashApp(App):
         self._store = DataStore()
         self._providers: dict[str, Provider] = {}
         self._selected_provider: str | None = None
-        self._alert_monitor = None
+        self._alert_monitor: object = None
+        self._watcher: object = None
 
         css_path = self._resolve_theme()
-        css_path_arg = [str(css_path)] if css_path else None
-        super().__init__(css_path=css_path_arg)
+        css_path_arg: list[str] | None = [str(css_path)] if css_path else None
+        super().__init__(css_path=css_path_arg)  # type: ignore[arg-type]
 
     def _resolve_theme(self) -> Path | None:
         theme = self._theme_override or self._config.theme
@@ -76,9 +77,25 @@ class QuotaDashApp(App):
                 from quota_dash.ghostty.colors import enhance_widgets
                 from quota_dash.ghostty.alerts import AlertMonitor
                 enhance_widgets(self)
-                self._alert_monitor = AlertMonitor()
+                self._alert_monitor = AlertMonitor()  # type: ignore[assignment]
             except Exception:
                 pass  # silently skip if ghostty module fails
+
+        # Start file watcher if proxy DB exists
+        if self._config.proxy.db_path.exists():
+            try:
+                from quota_dash.data.watcher import DBWatcher
+                self._watcher = DBWatcher(  # type: ignore[assignment]
+                    db_path=self._config.proxy.db_path,
+                    callback=lambda: self.run_worker(self._refresh_all()),  # type: ignore[arg-type]
+                )
+                self.run_worker(self._watcher.start())  # type: ignore[union-attr]
+            except Exception:
+                pass
+
+    def on_unmount(self) -> None:
+        if self._watcher:
+            self._watcher.stop()  # type: ignore[attr-defined]
 
     def _init_providers(self) -> None:
         provider_map = {"openai": OpenAIProvider, "anthropic": AnthropicProvider}
@@ -125,7 +142,7 @@ class QuotaDashApp(App):
         quotas = {n: self._store.get_quota(n) for n in provider_names if self._store.get_quota(n)}
         self.query_one(OverviewTable).refresh_data(
             providers=provider_names,
-            quotas=quotas,
+            quotas=quotas,  # type: ignore[arg-type]
             tokens_today=tokens_today,
             context_pcts=context_pcts,
             rate_limits=rate_limits,
@@ -143,7 +160,7 @@ class QuotaDashApp(App):
 
         # Alert monitoring (Ghostty only)
         if self._alert_monitor:
-            self._alert_monitor.check(self, self._store)
+            self._alert_monitor.check(self, self._store)  # type: ignore[attr-defined]
 
     async def _update_detail(self, provider_name: str) -> None:
         quota = self._store.get_quota(provider_name)
@@ -162,7 +179,7 @@ class QuotaDashApp(App):
                 from quota_dash.proxy.db import query_token_history
                 history = await query_token_history(db_path, provider_name)
                 if history:
-                    sparkline_data = [tok for _, tok in history]
+                    sparkline_data = [float(tok) for _, tok in history]
             panel.query_one(TokenCard).update_data(tokens, sparkline_data=sparkline_data)
         if context:
             panel.query_one(ContextCard).update_data(context)

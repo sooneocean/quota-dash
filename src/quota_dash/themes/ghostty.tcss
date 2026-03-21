@@ -22,11 +22,6 @@ DetailPanel {
     grid-gutter: 1;
 }
 
-@media (width < 120) {
-    #detail-grid {
-        grid-size: 1;
-    }
-}
 
 QuotaCard, TokenCard, ContextCard, RateLimitCard {
     border: solid #3b4261;

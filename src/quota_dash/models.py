@@ -45,3 +45,4 @@ class ProxyData:
     last_call: datetime
     calls_today: int
     tokens_today: int
+    ratelimit_reset: str | None = None

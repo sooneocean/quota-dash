@@ -19,4 +19,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
-      - run: pytest tests/ -v
+      - run: ruff check src/
+      - run: mypy src/quota_dash/
+      - run: pytest tests/ -v --cov=quota_dash --cov-fail-under=70

@@ -1,18 +1,20 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
 from quota_dash.config import ProviderConfig
 from quota_dash.data.log_parser import parse_claude_costs_jsonl
-from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo
+from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo, ProxyData
 from quota_dash.providers.base import Provider
 
 
 class AnthropicProvider(Provider):
     name = "anthropic"
 
-    def __init__(self, config: ProviderConfig) -> None:
+    def __init__(self, config: ProviderConfig, db_path: Path | None = None) -> None:
         self._config = config
+        self._db_path = db_path
 
     async def get_quota(self) -> QuotaInfo:
         now = datetime.now()
@@ -34,11 +36,36 @@ class AnthropicProvider(Provider):
             last_updated=now, source="unavailable", stale=False,
         )
 
+    async def get_proxy_data(self) -> ProxyData | None:
+        if self._db_path is None or not self._db_path.exists():
+            return None
+        from quota_dash.proxy.db import query_provider_data
+        return await query_provider_data(self._db_path, "anthropic")
+
     async def get_token_usage(self) -> TokenUsage:
+        proxy = await self.get_proxy_data()
+        if proxy is not None:
+            return TokenUsage(
+                input_tokens=proxy.input_tokens,
+                output_tokens=proxy.output_tokens,
+                total_tokens=proxy.total_tokens,
+                history=[(proxy.last_call, proxy.total_tokens)],
+                session_id=None,
+                source="proxy",
+            )
         costs_path = self._config.log_path / "metrics" / "costs.jsonl"
         return parse_claude_costs_jsonl(costs_path)
 
     async def get_context_window(self) -> ContextInfo:
+        proxy = await self.get_proxy_data()
+        if proxy is not None and proxy.input_tokens > 0:
+            return ContextInfo(
+                used_tokens=proxy.input_tokens,
+                max_tokens=200000,
+                percent_used=proxy.input_tokens / 200000 * 100,
+                model=proxy.model or "claude-opus-4-6",
+                note="last call snapshot",
+            )
         return ContextInfo(
             used_tokens=0, max_tokens=200000,
             percent_used=0.0, model="claude-opus-4-6",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo
+from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo, ProxyData
 
 
 class DataStore:
@@ -15,6 +15,7 @@ class DataStore:
         self._quotas: dict[str, QuotaInfo] = {}
         self._tokens: dict[str, TokenUsage] = {}
         self._contexts: dict[str, ContextInfo] = {}
+        self._proxy: dict[str, ProxyData] = {}
         self._revision: int = 0  # bumped on every update, used by reactive watchers
 
     @property
@@ -44,6 +45,24 @@ class DataStore:
 
     def providers(self) -> list[str]:
         return sorted(set(self._quotas) | set(self._tokens) | set(self._contexts))
+
+    def update_proxy(self, provider: str, proxy: ProxyData) -> None:
+        self._proxy[provider] = proxy
+        self._revision += 1
+
+    def get_proxy(self, provider: str) -> ProxyData | None:
+        return self._proxy.get(provider)
+
+    def total_tokens_today(self) -> int:
+        # Per-provider: prefer proxy data, fall back to token usage
+        total = 0
+        all_providers = set(self._proxy) | set(self._tokens)
+        for name in all_providers:
+            if name in self._proxy:
+                total += self._proxy[name].tokens_today
+            elif name in self._tokens:
+                total += self._tokens[name].total_tokens
+        return total
 
     def total_balance(self) -> float:
         return sum(q.balance_usd for q in self._quotas.values() if q.balance_usd is not None)

@@ -20,11 +20,6 @@ DetailPanel {
     grid-gutter: 1;
 }
 
-@media (width < 120) {
-    #detail-grid {
-        grid-size: 1;
-    }
-}
 
 HistoryTable {
     height: auto;
