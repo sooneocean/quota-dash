@@ -1,0 +1,1593 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://sooneocean.github.io/quota-dash/architecture/">
+      
+      
+        <link rel="prev" href="../guides/pypi-setup/">
+      
+      
+        <link rel="next" href="../changelog/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Architecture - quota-dash</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="quota-dash" class="md-header__button md-logo" aria-label="quota-dash" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            quota-dash
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sooneocean/quota-dash" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sooneocean/quota-dash
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../guides/getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guides/proxy-guide/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="quota-dash" class="md-nav__button md-logo" aria-label="quota-dash" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    quota-dash
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sooneocean/quota-dash" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sooneocean/quota-dash
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/proxy-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Proxy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/ghostty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ghostty
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/pypi-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PyPI Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Diagram
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#srcquota_dash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        src/quota_dash/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        providers/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        data/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        proxy/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        widgets/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ghostty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ghostty/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#normal-dashboard-poll" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normal Dashboard Poll
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-source-priority-per-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Source Priority (per provider)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proxy-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxy Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-add-a-new-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Add a New Provider
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to Add a New Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-add-a-provider-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Add a provider class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-register-the-provider-in-the-cli-and-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Register the provider in the CLI and app
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-add-proxy-routing-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Add proxy routing (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-configure-in-configtoml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Configure in config.toml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-write-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Write tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Diagram
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#srcquota_dash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        src/quota_dash/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        providers/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        data/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        proxy/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        widgets/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ghostty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ghostty/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#normal-dashboard-poll" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normal Dashboard Poll
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-source-priority-per-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Source Priority (per provider)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proxy-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxy Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-add-a-new-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Add a New Provider
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How to Add a New Provider">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-add-a-provider-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Add a provider class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-register-the-provider-in-the-cli-and-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Register the provider in the CLI and app
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-add-proxy-routing-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Add proxy routing (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-configure-in-configtoml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Configure in config.toml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-write-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Write tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
+<p>This document describes the internal structure of quota-dash for contributors and anyone extending the project.</p>
+<h2 id="high-level-diagram">High-Level Diagram<a class="headerlink" href="#high-level-diagram" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────────────────────┐
+│                         CLI (cli.py)                            │
+│  quota-dash [--once] [--json] [--with-proxy] [proxy start|stop] │
+└──────────┬──────────────────────────────────┬───────────────────┘
+           │ dashboard                        │ proxy subcommand
+           ▼                                  ▼
+┌──────────────────────┐          ┌──────────────────────────────┐
+│   QuotaDashApp       │          │   Proxy Daemon (uvicorn)     │
+│   (app.py)           │          │   daemon.py + app.py         │
+│                      │          │                              │
+│  ┌────────────────┐  │          │  Starlette ASGI app          │
+│  │  DataStore     │  │          │  Routes: /v1/messages        │
+│  │  (store.py)    │◄─┼──────────┤         /v1/chat/completions │
+│  └────────────────┘  │  reads   │         /v1/completions      │
+│          │           │  SQLite  │         /v1/embeddings       │
+│  ┌───────▼────────┐  │          │         /health              │
+│  │  Providers     │  │          │                              │
+│  │  openai.py     │  │          │  parser.py (usage extract)   │
+│  │  anthropic.py  │  │          │  streaming.py (SSE buffer)   │
+│  └───────┬────────┘  │          │  db.py (SQLite writes)       │
+│          │           │          └──────────────┬───────────────┘
+│  ┌───────▼────────┐  │                         │
+│  │  Widgets       │  │          ┌──────────────▼───────────────┐
+│  │  OverviewTable │  │          │  SQLite DB                   │
+│  │  DetailPanel   │  │          │  ~/.config/quota-dash/       │
+│  │  QuotaCard     │  │          │  usage.db                    │
+│  │  TokenCard     │  │          │                              │
+│  │  ContextCard   │  │          │  api_calls table             │
+│  │  RateLimitCard │  │          └──────────────────────────────┘
+│  │  HistoryTable  │  │
+│  └────────────────┘  │
+│                      │
+│  Ghostty layer       │
+│  detect.py           │
+│  colors.py           │
+│  alerts.py           │
+└──────────────────────┘
+</code></pre></div>
+<h2 id="module-overview">Module Overview<a class="headerlink" href="#module-overview" title="Permanent link">&para;</a></h2>
+<h3 id="srcquota_dash"><code>src/quota_dash/</code><a class="headerlink" href="#srcquota_dash" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module / Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>models.py</code></td>
+<td>Shared dataclasses: <code>QuotaInfo</code>, <code>TokenUsage</code>, <code>ContextInfo</code>, <code>ProxyData</code></td>
+</tr>
+<tr>
+<td><code>config.py</code></td>
+<td>Load and parse <code>config.toml</code> into <code>AppConfig</code>, <code>ProviderConfig</code>, <code>ProxyConfig</code></td>
+</tr>
+<tr>
+<td><code>cli.py</code></td>
+<td>Click CLI entry point: main group, <code>--once</code>, <code>--with-proxy</code>, <code>proxy</code> subgroup</td>
+</tr>
+<tr>
+<td><code>app.py</code></td>
+<td><code>QuotaDashApp</code> — Textual application, polling loop, provider orchestration</td>
+</tr>
+</tbody>
+</table>
+<h3 id="providers"><code>providers/</code><a class="headerlink" href="#providers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>base.py</code></td>
+<td><code>Provider</code> ABC: <code>get_quota()</code>, <code>get_token_usage()</code>, <code>get_context_window()</code>, <code>get_proxy_data()</code></td>
+</tr>
+<tr>
+<td><code>openai.py</code></td>
+<td><code>OpenAIProvider</code>: OpenAI usage API → manual config → Codex log fallback</td>
+</tr>
+<tr>
+<td><code>anthropic.py</code></td>
+<td><code>AnthropicProvider</code>: manual config → Claude CLI JSONL fallback; proxy for tokens</td>
+</tr>
+</tbody>
+</table>
+<h3 id="data"><code>data/</code><a class="headerlink" href="#data" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>store.py</code></td>
+<td><code>DataStore</code>: in-memory store for quota, token, context, and proxy data with revision counter</td>
+</tr>
+<tr>
+<td><code>api_client.py</code></td>
+<td>Async HTTP calls to the OpenAI usage API</td>
+</tr>
+<tr>
+<td><code>log_parser.py</code></td>
+<td>Parse Codex SQLite logs and Claude CLI <code>costs.jsonl</code> for offline token data</td>
+</tr>
+</tbody>
+</table>
+<h3 id="proxy"><code>proxy/</code><a class="headerlink" href="#proxy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app.py</code></td>
+<td>Starlette ASGI app: route matching, request forwarding, streaming interception</td>
+</tr>
+<tr>
+<td><code>handler.py</code></td>
+<td>Route table (path prefix → upstream URL), provider name resolution</td>
+</tr>
+<tr>
+<td><code>parser.py</code></td>
+<td><code>extract_usage()</code>: parse usage from JSON response body + headers for OpenAI/Anthropic</td>
+</tr>
+<tr>
+<td><code>streaming.py</code></td>
+<td><code>StreamingBuffer</code>: accumulate SSE lines and extract usage at stream end</td>
+</tr>
+<tr>
+<td><code>db.py</code></td>
+<td><code>init_db()</code>, <code>write_api_call()</code>, <code>query_provider_data()</code>, <code>query_recent_calls()</code>, <code>query_token_history()</code></td>
+</tr>
+<tr>
+<td><code>daemon.py</code></td>
+<td><code>start_proxy()</code>, <code>stop_proxy()</code>, <code>proxy_status()</code> with PID file management</td>
+</tr>
+</tbody>
+</table>
+<h3 id="widgets"><code>widgets/</code><a class="headerlink" href="#widgets" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>overview_table.py</code></td>
+<td><code>OverviewTable</code>: Textual <code>DataTable</code> showing all providers in one row each</td>
+</tr>
+<tr>
+<td><code>detail_panel.py</code></td>
+<td><code>DetailPanel</code>: container composing the four detail cards</td>
+</tr>
+<tr>
+<td><code>quota_card.py</code></td>
+<td><code>QuotaCard</code>: balance/limit progress bar (<code>#quota-bar</code>)</td>
+</tr>
+<tr>
+<td><code>token_card.py</code></td>
+<td><code>TokenCard</code>: input/output/total token counts + sparkline</td>
+</tr>
+<tr>
+<td><code>context_card.py</code></td>
+<td><code>ContextCard</code>: context window progress bar (<code>#ctx-bar</code>)</td>
+</tr>
+<tr>
+<td><code>ratelimit_card.py</code></td>
+<td><code>RateLimitCard</code>: rate limit remaining tokens/requests from proxy</td>
+</tr>
+<tr>
+<td><code>history_table.py</code></td>
+<td><code>HistoryTable</code>: recent API calls from SQLite (today only)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ghostty"><code>ghostty/</code><a class="headerlink" href="#ghostty" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>detect.py</code></td>
+<td><code>is_ghostty()</code>: check <code>$TERM_PROGRAM == "ghostty"</code></td>
+</tr>
+<tr>
+<td><code>colors.py</code></td>
+<td><code>threshold_color()</code>, <code>enhance_widgets()</code>: inject reactive color watchers on <code>ProgressBar</code>s</td>
+</tr>
+<tr>
+<td><code>alerts.py</code></td>
+<td><code>AlertMonitor</code>: three-tier alert system with OSC 9 notifications and border coloring</td>
+</tr>
+</tbody>
+</table>
+<h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
+<h3 id="normal-dashboard-poll">Normal Dashboard Poll<a class="headerlink" href="#normal-dashboard-poll" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>set_interval(polling_interval) → _poll() → _refresh_all()
+    │
+    ├─ for each Provider:
+    │      get_quota()        → QuotaInfo
+    │      get_token_usage()  → TokenUsage
+    │      get_context_window() → ContextInfo
+    │      get_proxy_data()   → ProxyData | None  (reads SQLite)
+    │
+    ├─ DataStore.update_quota/tokens/context/proxy()
+    │
+    ├─ OverviewTable.refresh_data()   (all providers, summary row)
+    │
+    ├─ _update_detail(selected_provider)
+    │      QuotaCard.update_data(quota)
+    │      TokenCard.update_data(tokens, sparkline)
+    │      ContextCard.update_data(context)
+    │      RateLimitCard.update_data(proxy)
+    │      HistoryTable.update_data(recent_calls from SQLite)
+    │
+    └─ AlertMonitor.check(app, store)   [Ghostty only]
+</code></pre></div>
+<h3 id="data-source-priority-per-provider">Data Source Priority (per provider)<a class="headerlink" href="#data-source-priority-per-provider" title="Permanent link">&para;</a></h3>
+<p>Providers implement a waterfall: each method tries the highest-quality source first and falls back gracefully.</p>
+<div class="highlight"><pre><span></span><code>get_token_usage():
+    1. ProxyData from SQLite       (source = &quot;proxy&quot;)
+    2. Log file parsing            (source = &quot;log&quot;)
+    3. Return zeros                (source = &quot;estimated&quot;)
+
+get_quota():
+    1. OpenAI usage API            (source = &quot;api&quot;)       [OpenAI only]
+    2. Manual config values        (source = &quot;manual&quot;)
+    3. Return None fields          (source = &quot;unavailable&quot;)
+</code></pre></div>
+<h2 id="proxy-data-flow">Proxy Data Flow<a class="headerlink" href="#proxy-data-flow" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>CLI tool (Claude Code, Codex, etc.)
+    │
+    │  OPENAI_BASE_URL=http://127.0.0.1:8300
+    │  ANTHROPIC_BASE_URL=http://127.0.0.1:8300
+    ▼
+Starlette proxy (proxy/app.py)
+    │
+    ├─ resolve_target(path, routes)
+    │      /v1/messages        → https://api.anthropic.com/v1/messages
+    │      /v1/chat/completions → https://api.openai.com/v1/chat/completions
+    │      ...
+    │
+    ├─ httpx.AsyncClient forwards request with original headers
+    │
+    ├─ Response:
+    │    Non-streaming:
+    │      extract_usage(body_json, resp_headers) → ApiCallRecord
+    │      write_api_call(db_path, record)
+    │      return Response (unchanged)
+    │
+    │    Streaming (SSE):
+    │      StreamingResponse: yield chunks to client
+    │      StreamingBuffer.feed_line(line) accumulates
+    │      On stream end: buf.extract_usage() → ApiCallRecord
+    │                     write_api_call(db_path, record)
+    │
+    └─ SQLite api_calls table
+           └─ Dashboard reads on next poll via query_provider_data()
+</code></pre></div>
+<h2 id="how-to-add-a-new-provider">How to Add a New Provider<a class="headerlink" href="#how-to-add-a-new-provider" title="Permanent link">&para;</a></h2>
+<p>Follow these steps to add support for a new AI provider (e.g., <code>mistral</code>):</p>
+<h3 id="1-add-a-provider-class">1. Add a provider class<a class="headerlink" href="#1-add-a-provider-class" title="Permanent link">&para;</a></h3>
+<p>Create <code>src/quota_dash/providers/mistral.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">quota_dash.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProviderConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">quota_dash.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuotaInfo</span><span class="p">,</span> <span class="n">TokenUsage</span><span class="p">,</span> <span class="n">ContextInfo</span><span class="p">,</span> <span class="n">ProxyData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">quota_dash.providers.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provider</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MistralProvider</span><span class="p">(</span><span class="n">Provider</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;mistral&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ProviderConfig</span><span class="p">,</span> <span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_path</span> <span class="o">=</span> <span class="n">db_path</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_quota</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuotaInfo</span><span class="p">:</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">balance_usd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">QuotaInfo</span><span class="p">(</span>
+                <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;mistral&quot;</span><span class="p">,</span>
+                <span class="n">balance_usd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">balance_usd</span><span class="p">,</span>
+                <span class="n">limit_usd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">limit_usd</span><span class="p">,</span>
+                <span class="n">usage_today_usd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">last_updated</span><span class="o">=</span><span class="n">now</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="s2">&quot;manual&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">QuotaInfo</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;mistral&quot;</span><span class="p">,</span>
+            <span class="n">balance_usd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit_usd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">usage_today_usd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">last_updated</span><span class="o">=</span><span class="n">now</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;unavailable&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_token_usage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TokenUsage</span><span class="p">:</span>
+        <span class="c1"># Add proxy DB lookup here if you add Mistral routes to the proxy</span>
+        <span class="k">return</span> <span class="n">TokenUsage</span><span class="p">(</span><span class="n">input_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_context_window</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContextInfo</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ContextInfo</span><span class="p">(</span><span class="n">used_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">32000</span><span class="p">,</span> <span class="n">percent_used</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;mistral-large&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="2-register-the-provider-in-the-cli-and-app">2. Register the provider in the CLI and app<a class="headerlink" href="#2-register-the-provider-in-the-cli-and-app" title="Permanent link">&para;</a></h3>
+<p>In <code>src/quota_dash/cli.py</code>, add to <code>provider_map_cls</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">quota_dash.providers.mistral</span><span class="w"> </span><span class="kn">import</span> <span class="n">MistralProvider</span>
+
+<span class="n">provider_map_cls</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;openai&quot;</span><span class="p">:</span> <span class="n">OpenAIProvider</span><span class="p">,</span>
+    <span class="s2">&quot;anthropic&quot;</span><span class="p">:</span> <span class="n">AnthropicProvider</span><span class="p">,</span>
+    <span class="s2">&quot;mistral&quot;</span><span class="p">:</span> <span class="n">MistralProvider</span><span class="p">,</span>   <span class="c1"># add this</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Repeat the same addition in <code>src/quota_dash/app.py</code> inside <code>_init_providers()</code>.</p>
+<h3 id="3-add-proxy-routing-optional">3. Add proxy routing (optional)<a class="headerlink" href="#3-add-proxy-routing-optional" title="Permanent link">&para;</a></h3>
+<p>If Mistral uses an OpenAI-compatible API, add its path prefix to <code>proxy/handler.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">DEFAULT_ROUTES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;/v1/chat/completions&quot;</span><span class="p">:</span> <span class="s2">&quot;https://api.openai.com&quot;</span><span class="p">,</span>  <span class="c1"># already handles OpenAI-compat</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>If Mistral uses a distinct path (e.g., <code>/v1/mistral/chat</code>), add it to both <code>DEFAULT_ROUTES</code> and <code>_PATH_TO_PROVIDER</code>.</p>
+<h3 id="4-configure-in-configtoml">4. Configure in config.toml<a class="headerlink" href="#4-configure-in-configtoml" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">[providers.mistral]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">balance_usd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.00</span>
+<span class="n">limit_usd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">20.00</span>
+</code></pre></div>
+<h3 id="5-write-tests">5. Write tests<a class="headerlink" href="#5-write-tests" title="Permanent link">&para;</a></h3>
+<p>Add <code>tests/test_providers_mistral.py</code> with at least:
+- A test that <code>get_quota()</code> returns <code>source="manual"</code> when <code>balance_usd</code> is set
+- A test that <code>get_quota()</code> returns <code>source="unavailable"</code> when no config is present
+- A test that <code>get_token_usage()</code> returns a <code>TokenUsage</code> dataclass instance</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

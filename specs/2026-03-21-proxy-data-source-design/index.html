@@ -1,0 +1,1460 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://sooneocean.github.io/quota-dash/specs/2026-03-21-proxy-data-source-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>quota-dash v0.2: Local Proxy Data Source — Design Spec - quota-dash</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#quota-dash-v02-local-proxy-data-source-design-spec" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="quota-dash" class="md-header__button md-logo" aria-label="quota-dash" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            quota-dash
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              quota-dash v0.2: Local Proxy Data Source — Design Spec
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sooneocean/quota-dash" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sooneocean/quota-dash
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../guides/getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/proxy-guide/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="quota-dash" class="md-nav__button md-logo" aria-label="quota-dash" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    quota-dash
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sooneocean/quota-dash" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sooneocean/quota-dash
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/proxy-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Proxy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/ghostty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ghostty
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/pypi-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PyPI Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-goals-this-iteration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-Goals (This Iteration)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tech-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tech Stack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tech Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Routing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sqlite-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQLite Schema
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response-parser-auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response Parser Auto-Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Response Parser Auto-Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-field-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Field Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fault-tolerance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fault Tolerance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streaming-sse-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming (SSE) Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Streaming (SSE) Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#streaming-usage-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming Usage Extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Interface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pid-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PID File
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-code-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config Code Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dashboard Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-source-merging-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Source Merging Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changes-to-existing-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes to Existing Providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-data-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Data Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-setup-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Setup Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="quota-dash-v02-local-proxy-data-source-design-spec">quota-dash v0.2: Local Proxy Data Source — Design Spec<a class="headerlink" href="#quota-dash-v02-local-proxy-data-source-design-spec" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Transparent local HTTP proxy that intercepts LLM API responses to collect real token usage, rate limit, and cost data for the quota-dash dashboard.</p>
+</blockquote>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>A local HTTP reverse proxy that sits between CLI tools (Codex, Claude Code, etc.) and LLM provider APIs. It transparently forwards all requests/responses without modification, while reading response bodies and headers to extract token usage data into a SQLite database. The dashboard then queries this database as its primary data source.</p>
+<h2 id="goals">Goals<a class="headerlink" href="#goals" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Collect real token usage data (input/output/total) from every API call</li>
+<li>Capture rate limit information from response headers</li>
+<li>Track context window usage via <code>input_tokens</code> from most recent API call (labeled as "last call snapshot" — not precise context window size, but the best proxy-level approximation)</li>
+<li>Support OpenAI and Anthropic response formats with auto-detection</li>
+<li>Handle both streaming (SSE) and non-streaming responses</li>
+<li>Zero interference — proxy never modifies requests or responses</li>
+</ol>
+<h2 id="non-goals-this-iteration">Non-Goals (This Iteration)<a class="headerlink" href="#non-goals-this-iteration" title="Permanent link">&para;</a></h2>
+<ul>
+<li>TLS termination (users connect to proxy via plain HTTP on localhost)</li>
+<li>Request modification or injection</li>
+<li>Authentication/authorization at the proxy level</li>
+<li>Support for non-HTTP protocols (WebSocket, gRPC)</li>
+<li>Cost calculation (just record what the API returns)</li>
+</ul>
+<h2 id="tech-stack">Tech Stack<a class="headerlink" href="#tech-stack" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Proxy</strong>: Starlette ASGI app + httpx (async HTTP client) + uvicorn</li>
+<li><strong>Storage</strong>: SQLite via aiosqlite</li>
+<li><strong>CLI</strong>: click (extending existing quota-dash CLI)</li>
+<li><strong>Config</strong>: existing TOML config system</li>
+<li><strong>Logging</strong>: Python stdlib <code>logging</code> to file (<code>~/.config/quota-dash/proxy.log</code>)</li>
+</ul>
+<h3 id="new-dependencies">New Dependencies<a class="headerlink" href="#new-dependencies" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Added to pyproject.toml (httpx already exists as a dependency)</span>
+<span class="s2">&quot;starlette&gt;=0.40.0&quot;</span><span class="err">,</span>
+<span class="s2">&quot;uvicorn&gt;=0.30.0&quot;</span><span class="err">,</span>
+<span class="s2">&quot;aiosqlite&gt;=0.20.0&quot;</span><span class="err">,</span>
+</code></pre></div>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>User CLI Tool (Codex / Claude Code / custom)
+    │
+    │  HTTP request → http://localhost:8300
+    ▼
+┌─────────────────────────────────────┐
+│  quota-dash-proxy (uvicorn ASGI)    │
+│                                     │
+│  ┌───────────┐  ┌────────────────┐  │
+│  │ Passthrough│  │ Response       │  │
+│  │ Handler    │──▶ Parser Router  │  │
+│  │            │  │                │  │
+│  │ req → API  │  │ auto-detect:   │  │
+│  │ res ← API  │  │ • OpenAI       │  │
+│  └───────────┘  │ • Anthropic    │  │
+│                  │ • Unknown→skip │  │
+│                  └───────┬────────┘  │
+│                          │           │
+│                  ┌───────▼────────┐  │
+│                  │ SQLite Writer  │  │
+│                  │ usage.db       │  │
+│                  └────────────────┘  │
+└─────────────────────────────────────┘
+    │
+    │  Original response returned unchanged
+    ▼
+User CLI Tool receives response
+</code></pre></div>
+<h3 id="core-principles">Core Principles<a class="headerlink" href="#core-principles" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Transparent</strong> — proxy never modifies any request or response</li>
+<li><strong>Auto-detect</strong> — parser router infers provider from response JSON structure</li>
+<li><strong>Fault-tolerant</strong> — parsing failures never block proxy operation</li>
+<li><strong>Non-blocking</strong> — SQLite writes use <code>asyncio.create_task()</code> after response is fully sent to client; a shutdown hook awaits pending writes before exit</li>
+<li><strong>HTTPS upstream</strong> — proxy receives plain HTTP on localhost, forwards to upstream APIs over HTTPS (handled naturally by httpx)</li>
+</ol>
+<h3 id="request-routing">Request Routing<a class="headerlink" href="#request-routing" title="Permanent link">&para;</a></h3>
+<p>The proxy routes requests to the correct upstream based on <strong>URL path prefix</strong>. OpenAI and Anthropic use non-overlapping API paths:</p>
+<table>
+<thead>
+<tr>
+<th>Path Prefix</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/v1/messages</code></td>
+<td>Anthropic (<code>https://api.anthropic.com</code>)</td>
+</tr>
+<tr>
+<td><code>/v1/chat/completions</code></td>
+<td>OpenAI (<code>https://api.openai.com</code>)</td>
+</tr>
+<tr>
+<td><code>/v1/completions</code></td>
+<td>OpenAI</td>
+</tr>
+<tr>
+<td><code>/v1/embeddings</code></td>
+<td>OpenAI</td>
+</tr>
+<tr>
+<td>Any other path</td>
+<td>Attempt to match against <code>[proxy.targets]</code> config; if no match, return 404</td>
+</tr>
+</tbody>
+</table>
+<p>When <code>--target</code> flag is set (e.g., <code>--target openai</code>), requests matching other providers return 404 with a clear error message: <code>"Proxy is configured for openai only. This path routes to anthropic."</code></p>
+<p>The path-to-target mapping is stored in <code>handler.py</code> and is extensible via <code>[proxy.targets]</code> config for future providers.</p>
+<h2 id="file-structure">File Structure<a class="headerlink" href="#file-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>src/quota_dash/
+├── proxy/
+│   ├── __init__.py
+│   ├── app.py           # Starlette ASGI application + routing
+│   ├── handler.py       # Request passthrough + response capture
+│   ├── parser.py        # Provider auto-detection + usage extraction
+│   ├── streaming.py     # SSE chunk buffering + final usage extraction
+│   ├── db.py            # SQLite schema + async write operations
+│   └── daemon.py        # Start/stop/status daemon management
+├── ...existing files...
+</code></pre></div>
+<h2 id="sqlite-schema">SQLite Schema<a class="headerlink" href="#sqlite-schema" title="Permanent link">&para;</a></h2>
+<p>File: <code>~/.config/quota-dash/usage.db</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">api_calls</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="n">AUTOINCREMENT</span><span class="p">,</span>
+<span class="w">    </span><span class="k">timestamp</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">)),</span><span class="w">  </span><span class="c1">-- ISO-8601 UTC</span>
+<span class="w">    </span><span class="n">provider</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="w">    </span><span class="n">model</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="w">    </span><span class="n">endpoint</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+
+<span class="w">    </span><span class="n">input_tokens</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="n">output_tokens</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="n">total_tokens</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+
+<span class="w">    </span><span class="n">ratelimit_remaining_tokens</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="n">ratelimit_remaining_requests</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="n">ratelimit_reset</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+
+<span class="w">    </span><span class="n">request_id</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="w">    </span><span class="n">target_url</span><span class="w"> </span><span class="nb">TEXT</span>
+<span class="p">);</span>
+
+<span class="c1">-- Schema version for future migrations</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">schema_version</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">version</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="p">);</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">schema_version</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_api_calls_timestamp</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">api_calls</span><span class="p">(</span><span class="k">timestamp</span><span class="p">);</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_api_calls_provider</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">api_calls</span><span class="p">(</span><span class="n">provider</span><span class="p">);</span>
+</code></pre></div>
+<h2 id="response-parser-auto-detection">Response Parser Auto-Detection<a class="headerlink" href="#response-parser-auto-detection" title="Permanent link">&para;</a></h2>
+<p>Detection logic based on response JSON structure:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">detect_provider</span><span class="p">(</span><span class="n">body</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="c1"># Anthropic: has &quot;type&quot;: &quot;message&quot; and usage with input_tokens</span>
+    <span class="k">if</span> <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;message&quot;</span> <span class="ow">and</span> <span class="s2">&quot;input_tokens&quot;</span> <span class="ow">in</span> <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;usage&quot;</span><span class="p">,</span> <span class="p">{}):</span>
+        <span class="k">return</span> <span class="s2">&quot;anthropic&quot;</span>
+
+    <span class="c1"># OpenAI: has &quot;choices&quot; and usage with prompt_tokens</span>
+    <span class="k">if</span> <span class="s2">&quot;choices&quot;</span> <span class="ow">in</span> <span class="n">body</span> <span class="ow">and</span> <span class="s2">&quot;prompt_tokens&quot;</span> <span class="ow">in</span> <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;usage&quot;</span><span class="p">,</span> <span class="p">{}):</span>
+        <span class="k">return</span> <span class="s2">&quot;openai&quot;</span>
+
+    <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span>
+</code></pre></div>
+<h3 id="usage-field-mapping">Usage Field Mapping<a class="headerlink" href="#usage-field-mapping" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>OpenAI</th>
+<th>Anthropic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>input_tokens</td>
+<td><code>usage.prompt_tokens</code></td>
+<td><code>usage.input_tokens</code></td>
+</tr>
+<tr>
+<td>output_tokens</td>
+<td><code>usage.completion_tokens</code></td>
+<td><code>usage.output_tokens</code></td>
+</tr>
+<tr>
+<td>total_tokens</td>
+<td><code>usage.total_tokens</code></td>
+<td>sum of above</td>
+</tr>
+<tr>
+<td>model</td>
+<td><code>model</code></td>
+<td><code>model</code></td>
+</tr>
+<tr>
+<td>request_id</td>
+<td><code>x-request-id</code> header</td>
+<td><code>request-id</code> header</td>
+</tr>
+<tr>
+<td>rate limit tokens</td>
+<td><code>x-ratelimit-remaining-tokens</code></td>
+<td><code>anthropic-ratelimit-tokens-remaining</code></td>
+</tr>
+<tr>
+<td>rate limit requests</td>
+<td><code>x-ratelimit-remaining-requests</code></td>
+<td><code>anthropic-ratelimit-requests-remaining</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="fault-tolerance">Fault Tolerance<a class="headerlink" href="#fault-tolerance" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Response body is not valid JSON → skip, do not record</li>
+<li><code>detect_provider</code> returns <code>"unknown"</code> → attempt to extract rate limit from headers, other fields NULL</li>
+<li>Any parser exception → log warning, do not affect proxy operation</li>
+<li>SQLite write failure → log error, do not affect proxy operation</li>
+</ul>
+<h2 id="streaming-sse-handling">Streaming (SSE) Handling<a class="headerlink" href="#streaming-sse-handling" title="Permanent link">&para;</a></h2>
+<p><strong>Detection</strong>: Response <code>content-type: text/event-stream</code> or request body contains <code>"stream": true</code>.</p>
+<p><strong>Strategy</strong>: Forward chunks to client in real-time while buffering internally. Extract usage from the final chunk.</p>
+<h3 id="streaming-usage-extraction">Streaming Usage Extraction<a class="headerlink" href="#streaming-usage-extraction" title="Permanent link">&para;</a></h3>
+<p><strong>OpenAI</strong>: When <code>stream_options.include_usage=true</code>, the final chunk before <code>data: [DONE]</code> has <code>choices: []</code> (empty array) and <strong>top-level</strong> <code>usage</code> field:
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="nt">&quot;choices&quot;</span><span class="p">:[],</span><span class="nt">&quot;usage&quot;</span><span class="p">:{</span><span class="nt">&quot;prompt_tokens&quot;</span><span class="p">:</span><span class="mi">50</span><span class="p">,</span><span class="nt">&quot;completion_tokens&quot;</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span><span class="nt">&quot;total_tokens&quot;</span><span class="p">:</span><span class="mi">70</span><span class="p">}}</span>
+</code></pre></div>
+Extract: <code>chunk.usage.prompt_tokens</code>, <code>chunk.usage.completion_tokens</code>, <code>chunk.usage.total_tokens</code>.</p>
+<p><strong>Anthropic</strong>: Usage data is split across two events:
+1. <code>event: message_start</code> — contains <code>message.usage.input_tokens</code> (capture this)
+2. <code>event: message_delta</code> (before <code>message_stop</code>) — contains <code>usage.output_tokens</code> (capture this)</p>
+<p>The proxy buffers both values and combines them into a single <code>api_calls</code> record.</p>
+<p><strong>If streaming response has no usage data</strong> (e.g., OpenAI without <code>include_usage</code>): record with <code>total_tokens=NULL</code>, dashboard shows "partial data". Never fabricate numbers.</p>
+<h2 id="cli-interface">CLI Interface<a class="headerlink" href="#cli-interface" title="Permanent link">&para;</a></h2>
+<h3 id="new-commands">New Commands<a class="headerlink" href="#new-commands" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Proxy management</span>
+quota-dash<span class="w"> </span>proxy<span class="w"> </span>start<span class="w">                          </span><span class="c1"># localhost:8300</span>
+quota-dash<span class="w"> </span>proxy<span class="w"> </span>start<span class="w"> </span>--port<span class="w"> </span><span class="m">9000</span><span class="w">              </span><span class="c1"># custom port</span>
+quota-dash<span class="w"> </span>proxy<span class="w"> </span>start<span class="w"> </span>--target<span class="w"> </span>openai<span class="w">          </span><span class="c1"># forward to OpenAI only</span>
+quota-dash<span class="w"> </span>proxy<span class="w"> </span>start<span class="w"> </span>--target<span class="w"> </span>anthropic<span class="w">       </span><span class="c1"># forward to Anthropic only</span>
+quota-dash<span class="w"> </span>proxy<span class="w"> </span>status<span class="w">                         </span><span class="c1"># show running proxy info</span>
+quota-dash<span class="w"> </span>proxy<span class="w"> </span>stop<span class="w">                           </span><span class="c1"># stop daemon</span>
+
+<span class="c1"># Dashboard with proxy</span>
+quota-dash<span class="w"> </span>--with-proxy<span class="w">                         </span><span class="c1"># auto-start proxy</span>
+quota-dash<span class="w"> </span>--with-proxy<span class="w"> </span>--proxy-port<span class="w"> </span><span class="m">9000</span>
+</code></pre></div>
+<h3 id="pid-file">PID File<a class="headerlink" href="#pid-file" title="Permanent link">&para;</a></h3>
+<p>Daemon writes PID to <code>~/.config/quota-dash/proxy.pid</code> for status/stop commands.</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>New section in <code>~/.config/quota-dash/config.toml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[proxy]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8300</span>
+<span class="n">db_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;~/.config/quota-dash/usage.db&quot;</span>
+<span class="n">log_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;~/.config/quota-dash/proxy.log&quot;</span>
+
+<span class="k">[proxy.targets]</span>
+<span class="n">openai</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://api.openai.com&quot;</span>
+<span class="n">anthropic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://api.anthropic.com&quot;</span>
+</code></pre></div>
+<h3 id="config-code-changes">Config Code Changes<a class="headerlink" href="#config-code-changes" title="Permanent link">&para;</a></h3>
+<p><code>AppConfig</code> gains a new <code>ProxyConfig</code> field:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProxyConfig</span><span class="p">:</span>
+    <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8300</span>
+    <span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;.config&quot;</span> <span class="o">/</span> <span class="s2">&quot;quota-dash&quot;</span> <span class="o">/</span> <span class="s2">&quot;usage.db&quot;</span><span class="p">)</span>
+    <span class="n">log_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;.config&quot;</span> <span class="o">/</span> <span class="s2">&quot;quota-dash&quot;</span> <span class="o">/</span> <span class="s2">&quot;proxy.log&quot;</span><span class="p">)</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;openai&quot;</span><span class="p">:</span> <span class="s2">&quot;https://api.openai.com&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;anthropic&quot;</span><span class="p">:</span> <span class="s2">&quot;https://api.anthropic.com&quot;</span><span class="p">,</span>
+    <span class="p">})</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AppConfig</span><span class="p">:</span>
+    <span class="c1"># ...existing fields...</span>
+    <span class="n">proxy</span><span class="p">:</span> <span class="n">ProxyConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">ProxyConfig</span><span class="p">)</span>
+</code></pre></div>
+<p><code>load_config()</code> is updated to parse <code>[proxy]</code> and <code>[proxy.targets]</code> sections.</p>
+<h2 id="dashboard-integration">Dashboard Integration<a class="headerlink" href="#dashboard-integration" title="Permanent link">&para;</a></h2>
+<p>Provider data source priority (highest to lowest):</p>
+<ol>
+<li><strong>SQLite</strong> (proxy-collected real-time data) — NEW</li>
+<li><strong>API</strong> (billing endpoint) — existing</li>
+<li><strong>Local log</strong> (CLI tool logs) — existing</li>
+<li><strong>Manual config</strong> — existing</li>
+</ol>
+<h3 id="data-source-merging-strategy">Data Source Merging Strategy<a class="headerlink" href="#data-source-merging-strategy" title="Permanent link">&para;</a></h3>
+<p>SQLite (proxy) and manual config serve <strong>different purposes</strong> and do not conflict:</p>
+<table>
+<thead>
+<tr>
+<th>Data Type</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token usage (in/out/total, sparkline)</td>
+<td>SQLite (proxy) → fallback to log/estimated</td>
+</tr>
+<tr>
+<td>Context window (last call snapshot)</td>
+<td>SQLite (proxy) <code>input_tokens</code> from most recent call, labeled "last call snapshot"</td>
+</tr>
+<tr>
+<td>Quota/billing ($balance, $limit)</td>
+<td>Manual config or billing API (proxy cannot capture billing info)</td>
+</tr>
+<tr>
+<td>Rate limits</td>
+<td>SQLite (proxy) headers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="changes-to-existing-providers">Changes to Existing Providers<a class="headerlink" href="#changes-to-existing-providers" title="Permanent link">&para;</a></h3>
+<p>The <code>Provider</code> ABC gains an optional method (not abstract — default returns None):</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Provider</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="c1"># ...existing abstract methods...</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_proxy_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProxyData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query SQLite for proxy-collected data. Default: None.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+<p>Both <code>OpenAIProvider</code> and <code>AnthropicProvider</code> override this method. Their <code>get_token_usage()</code> and <code>get_context_window()</code> methods now call <code>get_proxy_data()</code> first, falling back to existing sources if it returns None.</p>
+<p><strong>Constructor change</strong>: <code>db_path</code> is injected at construction time and stored as <code>self._db_path</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Updated constructor signature (both providers)</span>
+<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ProviderConfig</span><span class="p">,</span> <span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">config</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_db_path</span> <span class="o">=</span> <span class="n">db_path</span>
+</code></pre></div>
+<p><strong>Callsite changes</strong>: <code>app.py</code>'s <code>_init_providers()</code> and <code>cli.py</code>'s provider construction pass <code>db_path=config.proxy.db_path</code> (or <code>None</code> if proxy is not configured).</p>
+<h3 id="new-data-model">New Data Model<a class="headerlink" href="#new-data-model" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProxyData</span><span class="p">:</span>
+    <span class="n">input_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">output_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">total_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">ratelimit_remaining_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">ratelimit_remaining_requests</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">last_call</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">calls_today</span><span class="p">:</span> <span class="nb">int</span>              <span class="c1"># COUNT(*) WHERE date(timestamp) = date(&#39;now&#39;, &#39;localtime&#39;)</span>
+    <span class="n">tokens_today</span><span class="p">:</span> <span class="nb">int</span>             <span class="c1"># SUM(total_tokens) same filter</span>
+</code></pre></div>
+<h2 id="user-setup-flow">User Setup Flow<a class="headerlink" href="#user-setup-flow" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>quota-dash proxy start</code></li>
+<li>Configure CLI tool API base URL:</li>
+<li>Codex: <code>export OPENAI_BASE_URL=http://localhost:8300</code></li>
+<li>Claude Code: <code>export ANTHROPIC_BASE_URL=http://localhost:8300</code></li>
+<li>Use CLI tools normally — proxy collects data transparently</li>
+<li><code>quota-dash</code> shows real data from SQLite</li>
+</ol>
+<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Proxy cannot reach target API → return 502 Bad Gateway to client</li>
+<li>SQLite database locked → retry with backoff (3 attempts), then skip write</li>
+<li>Malformed request → forward as-is, let target API return the error</li>
+<li>Proxy port already in use → clear error message with PID of occupying process</li>
+</ul>
+<h2 id="testing-strategy">Testing Strategy<a class="headerlink" href="#testing-strategy" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Unit tests: parser detection, usage field extraction, SQLite read/write</li>
+<li>Integration tests: proxy end-to-end with mock upstream (httpx MockTransport)</li>
+<li>Streaming tests: SSE chunk buffering with mock event streams</li>
+<li>Fault tolerance tests: malformed responses, network errors, SQLite failures</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

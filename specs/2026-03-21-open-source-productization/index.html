@@ -1,0 +1,1286 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://sooneocean.github.io/quota-dash/specs/2026-03-21-open-source-productization/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>quota-dash v0.5.0: Open Source Productization — Design Spec - quota-dash</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#quota-dash-v050-open-source-productization-design-spec" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="quota-dash" class="md-header__button md-logo" aria-label="quota-dash" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            quota-dash
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              quota-dash v0.5.0: Open Source Productization — Design Spec
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sooneocean/quota-dash" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sooneocean/quota-dash
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../guides/getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/proxy-guide/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="quota-dash" class="md-nav__button md-logo" aria-label="quota-dash" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    quota-dash
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sooneocean/quota-dash" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    sooneocean/quota-dash
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/proxy-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Proxy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/ghostty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ghostty
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/pypi-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PyPI Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modified-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modified Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ci-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI Pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ciyml-pr-push-to-main" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ci.yml (PR + push to main)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#releaseyml-tag-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        release.yml (tag push)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyprojecttoml-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pyproject.toml Metadata
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#readmemd-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        README.md Content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LICENSE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributingmd-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CONTRIBUTING.md Content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changelogmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CHANGELOG.md
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation (docs/)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation (docs/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#getting-startedmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getting-started.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxy-guidemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        proxy-guide.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ghosttymd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ghostty.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecturemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        architecture.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue Templates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Issue Templates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug_reportmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bug_report.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature_requestmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        feature_request.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-version-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI --version Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gitignore-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .gitignore Updates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="quota-dash-v050-open-source-productization-design-spec">quota-dash v0.5.0: Open Source Productization — Design Spec<a class="headerlink" href="#quota-dash-v050-open-source-productization-design-spec" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>README, CI/CD, PyPI auto-publish, documentation, and community-ready project structure.</p>
+</blockquote>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Transform quota-dash from a working tool into a properly packaged open source project. Add MIT license, comprehensive but layered documentation (concise README + detailed docs/), GitHub Actions CI (multi-Python matrix) and release pipeline (tag-triggered PyPI upload), issue templates, and contributing guidelines.</p>
+<h2 id="goals">Goals<a class="headerlink" href="#goals" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Installable via <code>pip install quota-dash</code> from PyPI</li>
+<li>CI runs tests on every PR/push across Python 3.11/3.12/3.13</li>
+<li>Tag push (<code>v*</code>) auto-publishes to PyPI + creates GitHub Release</li>
+<li>README is concise with badges, screenshot, and links to detailed docs</li>
+<li>Contributors have clear guidance (CONTRIBUTING.md, issue templates)</li>
+</ol>
+<h2 id="non-goals">Non-Goals<a class="headerlink" href="#non-goals" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Linter/formatter setup (no ruff/black — future iteration)</li>
+<li>Test coverage reporting</li>
+<li>Docker images</li>
+<li>Documentation website (GitHub Pages, ReadTheDocs, etc.)</li>
+<li>Logo/branding design</li>
+</ul>
+<h2 id="file-structure">File Structure<a class="headerlink" href="#file-structure" title="Permanent link">&para;</a></h2>
+<h3 id="new-files">New Files<a class="headerlink" href="#new-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>quota-dash/
+├── README.md                          # Concise: badges + features + install + quick start + doc links
+├── LICENSE                            # MIT
+├── CONTRIBUTING.md                    # Dev setup, PR process, code style notes
+├── CHANGELOG.md                       # Keep-a-Changelog format
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml                     # PR/push: test matrix
+│   │   └── release.yml                # Tag push: build + PyPI + GitHub Release
+│   └── ISSUE_TEMPLATE/
+│       ├── bug_report.md
+│       └── feature_request.md
+├── docs/
+│   ├── guides/                        # User-facing documentation
+│   │   ├── getting-started.md         # Detailed install + config
+│   │   ├── proxy-guide.md             # Proxy feature tutorial
+│   │   └── ghostty.md                # Ghostty enhancements
+│   ├── architecture.md               # Architecture overview for contributors
+│   ├── specs/                         # (existing) Internal design specs
+│   └── plans/                         # (existing) Internal implementation plans
+</code></pre></div>
+<h3 id="modified-files">Modified Files<a class="headerlink" href="#modified-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>├── pyproject.toml                     # Add metadata: description, license, authors, classifiers, urls
+├── .gitignore                         # Ensure dist/, *.egg-info, .superpowers/ excluded
+</code></pre></div>
+<h2 id="ci-pipeline">CI Pipeline<a class="headerlink" href="#ci-pipeline" title="Permanent link">&para;</a></h2>
+<h3 id="ciyml-pr-push-to-main">ci.yml (PR + push to main)<a class="headerlink" href="#ciyml-pr-push-to-main" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Trigger</strong>: push to <code>main</code>, pull_request to <code>main</code></li>
+<li><strong>Matrix</strong>: Python 3.11, 3.12, 3.13 on <code>ubuntu-latest</code></li>
+<li><strong>Steps</strong>:</li>
+<li><code>actions/checkout@v4</code></li>
+<li><code>actions/setup-python@v5</code> with matrix version</li>
+<li><code>pip install -e ".[dev]"</code></li>
+<li><code>pytest tests/ -v</code></li>
+</ul>
+<h3 id="releaseyml-tag-push">release.yml (tag push)<a class="headerlink" href="#releaseyml-tag-push" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Trigger</strong>: push tag matching <code>v*</code> (e.g., <code>v0.4.0</code>)</li>
+<li><strong>Steps</strong>:</li>
+<li><code>actions/checkout@v4</code></li>
+<li><code>actions/setup-python@v5</code> with Python 3.11</li>
+<li><code>pip install build</code></li>
+<li><code>python -m build</code></li>
+<li><code>pypa/gh-action-pypi-publish@release/v1</code> using PyPI Trusted Publishing (OIDC, no secret needed)</li>
+<li>Create GitHub Release with <code>softprops/action-gh-release@v2</code> using tag as title</li>
+</ul>
+<p><strong>Permissions block</strong> (required for GitHub Release creation + PyPI trusted publishing):
+<div class="highlight"><pre><span></span><code><span class="nt">permissions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">contents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span><span class="w">    </span><span class="c1"># for creating GitHub Releases</span>
+<span class="w">  </span><span class="nt">id-token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span><span class="w">    </span><span class="c1"># for PyPI trusted publishing (OIDC)</span>
+</code></pre></div></p>
+<p><strong>Required setup</strong>: Configure PyPI Trusted Publisher at pypi.org → project → Publishing → Add new publisher (GitHub, repo: <code>sooneocean/quota-dash</code>, workflow: <code>release.yml</code>). No API token secret needed.</p>
+<h2 id="pyprojecttoml-metadata">pyproject.toml Metadata<a class="headerlink" href="#pyprojecttoml-metadata" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="k">[project]</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;quota-dash&quot;</span>
+<span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.5.0&quot;</span>
+<span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Multi-provider LLM quota monitoring TUI dashboard targeting Ghostty&quot;</span>
+<span class="n">readme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;README.md&quot;</span>
+<span class="n">license</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">text</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;MIT&quot;</span><span class="p">}</span>
+<span class="n">requires-python</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;=3.11&quot;</span>
+<span class="n">authors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;sooneocean&quot;</span><span class="p">}</span>
+<span class="p">]</span>
+<span class="n">keywords</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;llm&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;quota&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dashboard&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tui&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;textual&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;ghostty&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;openai&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;anthropic&quot;</span><span class="p">]</span>
+<span class="n">classifiers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;Development Status :: 3 - Alpha&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;Environment :: Console&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;Framework :: Textual&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;License :: OSI Approved :: MIT License&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;Programming Language :: Python :: 3.11&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;Programming Language :: Python :: 3.12&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;Programming Language :: Python :: 3.13&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;Topic :: Utilities&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">[project.urls]</span>
+<span class="n">Homepage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://github.com/sooneocean/quota-dash&quot;</span>
+<span class="n">Repository</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://github.com/sooneocean/quota-dash&quot;</span>
+<span class="n">Issues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://github.com/sooneocean/quota-dash/issues&quot;</span>
+</code></pre></div>
+<h2 id="readmemd-content">README.md Content<a class="headerlink" href="#readmemd-content" title="Permanent link">&para;</a></h2>
+<p>Concise README with:
+- Badge row: CI status, PyPI version, Python 3.11+, MIT License
+- One-line description
+- Screenshot placeholder (to be replaced with actual terminal screenshot)
+- Features list (4 bullet points)
+- Install section (<code>pip install quota-dash</code>)
+- Quick Start (3 commands: dashboard, one-shot, proxy)
+- Documentation links → <code>docs/</code>
+- Contributing link → CONTRIBUTING.md
+- License line</p>
+<h2 id="license">LICENSE<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>MIT License, copyright 2026, sooneocean.</p>
+<h2 id="contributingmd-content">CONTRIBUTING.md Content<a class="headerlink" href="#contributingmd-content" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Prerequisites: Python 3.11+, git</li>
+<li>Dev setup: <code>git clone</code>, <code>pip install -e ".[dev]"</code>, <code>pytest</code></li>
+<li>Branch naming: <code>feat/</code>, <code>fix/</code>, <code>docs/</code></li>
+<li>PR process: fork → branch → commits → PR → CI must pass</li>
+<li>Code style notes: follow existing patterns, no strict formatter enforced yet</li>
+<li>Issue first: open an issue before large changes</li>
+</ul>
+<h2 id="changelogmd">CHANGELOG.md<a class="headerlink" href="#changelogmd" title="Permanent link">&para;</a></h2>
+<p>Keep-a-Changelog format (<code>keepachangelog.com</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="gh"># Changelog</span>
+
+<span class="gu">## [0.5.0] - 2026-03-21</span>
+
+<span class="gu">### Added</span>
+<span class="k">-</span><span class="w"> </span>Open source packaging: README, LICENSE (MIT), CONTRIBUTING.md, CHANGELOG.md
+<span class="k">-</span><span class="w"> </span>GitHub Actions CI (Python 3.11/3.12/3.13 test matrix)
+<span class="k">-</span><span class="w"> </span>Automated PyPI release on tag push via trusted publishing
+<span class="k">-</span><span class="w"> </span>User documentation (getting-started, proxy-guide, ghostty)
+<span class="k">-</span><span class="w"> </span>Architecture documentation for contributors
+<span class="k">-</span><span class="w"> </span>Issue templates (bug report, feature request)
+
+<span class="gu">## [0.4.0] - 2026-03-21</span>
+
+<span class="gu">### Added</span>
+<span class="k">-</span><span class="w"> </span>Ghostty terminal detection and threshold color enhancement
+<span class="k">-</span><span class="w"> </span>Three-tier quota alert system with OSC 9 desktop notifications
+<span class="k">-</span><span class="w"> </span>Local HTTP proxy for real-time token usage collection
+<span class="k">-</span><span class="w"> </span>SQLite storage for API call history
+<span class="k">-</span><span class="w"> </span>Overview+Detail dashboard layout with Textual native widgets
+<span class="k">-</span><span class="w"> </span>Response parser with OpenAI/Anthropic auto-detection
+<span class="k">-</span><span class="w"> </span>SSE streaming support for usage extraction
+<span class="k">-</span><span class="w"> </span>Proxy CLI subcommands (start/stop/status)
+<span class="k">-</span><span class="w"> </span><span class="sb">`--with-proxy`</span> flag for dashboard
+<span class="k">-</span><span class="w"> </span><span class="sb">`--once --json`</span> one-shot mode
+
+<span class="gu">### Changed</span>
+<span class="k">-</span><span class="w"> </span>Replaced text-render widgets with Textual DataTable, ProgressBar, Sparkline
+<span class="k">-</span><span class="w"> </span>All-provider refresh (previously single-provider)
+<span class="k">-</span><span class="w"> </span>Provider data source priority: proxy → API → log → manual
+
+<span class="gu">## [0.1.0] - 2026-03-20</span>
+
+<span class="gu">### Added</span>
+<span class="k">-</span><span class="w"> </span>Initial release: TUI dashboard with OpenAI and Anthropic providers
+<span class="k">-</span><span class="w"> </span>TOML configuration
+<span class="k">-</span><span class="w"> </span>Manual quota entry fallback
+<span class="k">-</span><span class="w"> </span>Default and Ghostty CSS themes
+<span class="k">-</span><span class="w"> </span>CLI with --once and --json modes
+</code></pre></div>
+<h2 id="documentation-docs">Documentation (docs/)<a class="headerlink" href="#documentation-docs" title="Permanent link">&para;</a></h2>
+<h3 id="getting-startedmd">getting-started.md<a class="headerlink" href="#getting-startedmd" title="Permanent link">&para;</a></h3>
+<ul>
+<li>System requirements (Python 3.11+)</li>
+<li>Install from PyPI (<code>pip install quota-dash</code>) or from source</li>
+<li>First run (<code>quota-dash --once</code>)</li>
+<li>Configuration file (<code>~/.config/quota-dash/config.toml</code>) with full TOML example</li>
+<li>Provider setup (API keys via environment variables)</li>
+</ul>
+<h3 id="proxy-guidemd">proxy-guide.md<a class="headerlink" href="#proxy-guidemd" title="Permanent link">&para;</a></h3>
+<ul>
+<li>What the proxy does (transparent API response interception)</li>
+<li>Starting the proxy (<code>quota-dash proxy start</code>)</li>
+<li>Configuring CLI tools (<code>OPENAI_BASE_URL</code>, <code>ANTHROPIC_BASE_URL</code>)</li>
+<li>Dashboard with proxy (<code>quota-dash --with-proxy</code>)</li>
+<li>Proxy config options</li>
+<li>Troubleshooting</li>
+</ul>
+<h3 id="ghosttymd">ghostty.md<a class="headerlink" href="#ghosttymd" title="Permanent link">&para;</a></h3>
+<ul>
+<li>What Ghostty enhancements are available</li>
+<li>Threshold colors (how they work, which widgets affected)</li>
+<li>Alert system (three tiers, notification behavior)</li>
+<li>How detection works (<code>$TERM_PROGRAM</code>)</li>
+</ul>
+<h3 id="architecturemd">architecture.md<a class="headerlink" href="#architecturemd" title="Permanent link">&para;</a></h3>
+<ul>
+<li>High-level architecture diagram (text)</li>
+<li>Module overview: models, config, providers, data, proxy, widgets, ghostty</li>
+<li>Data flow: poll → providers → DataStore → widgets</li>
+<li>Proxy data flow: CLI → proxy → SQLite → providers → widgets</li>
+<li>How to add a new provider (step-by-step)</li>
+</ul>
+<h2 id="issue-templates">Issue Templates<a class="headerlink" href="#issue-templates" title="Permanent link">&para;</a></h2>
+<h3 id="bug_reportmd">bug_report.md<a class="headerlink" href="#bug_reportmd" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Description, steps to reproduce, expected vs actual behavior</li>
+<li>Environment: OS, Python version, terminal, quota-dash version</li>
+</ul>
+<h3 id="feature_requestmd">feature_request.md<a class="headerlink" href="#feature_requestmd" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Problem description, proposed solution, alternatives considered</li>
+</ul>
+<h2 id="cli-version-support">CLI --version Support<a class="headerlink" href="#cli-version-support" title="Permanent link">&para;</a></h2>
+<p>Add <code>--version</code> flag to the CLI using <code>importlib.metadata</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>  <span class="c1"># or as a click option</span>
+<span class="n">click</span><span class="o">.</span><span class="n">version_option</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">(</span><span class="s2">&quot;quota-dash&quot;</span><span class="p">),</span> <span class="n">prog_name</span><span class="o">=</span><span class="s2">&quot;quota-dash&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>This reads the version from the installed package metadata — single source of truth in <code>pyproject.toml</code>.</p>
+<h2 id="gitignore-updates">.gitignore Updates<a class="headerlink" href="#gitignore-updates" title="Permanent link">&para;</a></h2>
+<p>Ensure these are excluded:
+<div class="highlight"><pre><span></span><code>dist/
+*.egg-info/
+.superpowers/
+build/
+</code></pre></div></p>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p>No new Python tests — this is documentation and CI configuration. Verification:
+- CI workflow syntax validated by GitHub Actions on push
+- <code>python -m build</code> succeeds locally
+- README renders correctly on GitHub</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
