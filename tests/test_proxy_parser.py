@@ -1,10 +1,12 @@
 # tests/test_proxy_parser.py
 from quota_dash.proxy.parser import detect_provider, extract_usage
-from quota_dash.proxy.db import ApiCallRecord
 
 
 def test_detect_openai():
-    body = {"choices": [{"message": {"content": "hi"}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}}
+    body = {
+        "choices": [{"message": {"content": "hi"}}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+    }
     assert detect_provider(body) == "openai"
 
 
@@ -19,9 +21,20 @@ def test_detect_unknown():
 
 
 def test_extract_openai_usage():
-    body = {"model": "gpt-4", "choices": [{}], "usage": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150}}
-    headers = {"x-request-id": "req-abc", "x-ratelimit-remaining-tokens": "9000", "x-ratelimit-remaining-requests": "99"}
-    record = extract_usage(body, headers, endpoint="/v1/chat/completions", target_url="https://api.openai.com/v1/chat/completions")
+    body = {
+        "model": "gpt-4", "choices": [{}],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
+    }
+    headers = {
+        "x-request-id": "req-abc",
+        "x-ratelimit-remaining-tokens": "9000",
+        "x-ratelimit-remaining-requests": "99",
+    }
+    record = extract_usage(
+        body, headers,
+        endpoint="/v1/chat/completions",
+        target_url="https://api.openai.com/v1/chat/completions",
+    )
     assert record.provider == "openai"
     assert record.input_tokens == 100
     assert record.output_tokens == 50

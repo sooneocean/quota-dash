@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib.util as _ilu
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from quota_dash.models import ProxyData
@@ -143,7 +143,7 @@ def _period_cutoff(period: str) -> str:
         delta = timedelta(days=value)
     else:
         raise ValueError(f"Invalid period: {period}. Use format like '1h', '24h', '7d'")
-    return (datetime.utcnow() - delta).isoformat(sep=" ")
+    return (datetime.now(timezone.utc) - delta).isoformat(sep=" ")
 
 
 async def query_recent_calls(db_path: Path, provider: str, limit: int = 20, period: str = "24h") -> list[dict]:

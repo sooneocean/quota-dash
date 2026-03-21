@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from quota_dash.config import ProviderConfig
@@ -16,7 +16,7 @@ class GoogleProvider(Provider):
         self._db_path = db_path
 
     async def get_quota(self) -> QuotaInfo:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         if self._config.balance_usd is not None:
             return QuotaInfo(

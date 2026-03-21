@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from quota_dash.config import ProviderConfig
@@ -19,7 +19,7 @@ class OpenAIProvider(Provider):
         self._db_path = db_path
 
     async def get_quota(self) -> QuotaInfo:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         api_key = os.environ.get(self._config.api_key_env, "")
         if api_key:

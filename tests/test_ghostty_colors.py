@@ -1,4 +1,12 @@
-from quota_dash.ghostty.colors import threshold_color
+from datetime import datetime
+
+import pytest
+from textual.app import App, ComposeResult
+
+from quota_dash.ghostty.colors import enhance_widgets, threshold_color
+from quota_dash.models import QuotaInfo
+from quota_dash.widgets.context_card import ContextCard
+from quota_dash.widgets.quota_card import QuotaCard
 
 
 # Context A: balance-oriented (high = good)
@@ -35,18 +43,6 @@ def test_usage_boundary_80():
     assert threshold_color(0.8, "usage") == "#ef4444"  # 0.8 is NOT < 0.8, so red
 
 
-import pytest
-from unittest.mock import patch
-from textual.app import App, ComposeResult
-from textual.widgets import ProgressBar
-
-from quota_dash.widgets.quota_card import QuotaCard
-from quota_dash.widgets.context_card import ContextCard
-from quota_dash.ghostty.colors import enhance_widgets
-from quota_dash.models import QuotaInfo, ContextInfo
-from datetime import datetime
-
-
 class GhosttyColorTestApp(App):
     def compose(self) -> ComposeResult:
         yield QuotaCard()
@@ -72,5 +68,5 @@ async def test_enhance_widgets_runs_without_error():
 async def test_enhance_widgets_no_crash_on_empty_app():
     """enhance_widgets should not crash if widgets are missing."""
     app = App()
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         enhance_widgets(app)  # should not raise

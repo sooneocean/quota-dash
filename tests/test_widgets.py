@@ -1,8 +1,15 @@
 from datetime import datetime
+
 import pytest
 from textual.app import App, ComposeResult
-from quota_dash.models import QuotaInfo
+
+from quota_dash.models import QuotaInfo, TokenUsage, ContextInfo, ProxyData
+from quota_dash.widgets.context_card import ContextCard
+from quota_dash.widgets.history_table import HistoryTable
+from quota_dash.widgets.overview_table import OverviewTable
 from quota_dash.widgets.quota_card import QuotaCard
+from quota_dash.widgets.ratelimit_card import RateLimitCard
+from quota_dash.widgets.token_card import TokenCard
 
 
 class QuotaCardTestApp(App):
@@ -13,7 +20,7 @@ class QuotaCardTestApp(App):
 @pytest.mark.asyncio
 async def test_quota_card_mount():
     app = QuotaCardTestApp()
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         card = app.query_one(QuotaCard)
         assert card is not None
 
@@ -45,11 +52,6 @@ async def test_quota_card_unavailable():
 
 
 # Task 4: TokenCard, ContextCard, RateLimitCard
-from quota_dash.models import TokenUsage, ContextInfo, ProxyData
-from quota_dash.widgets.token_card import TokenCard
-from quota_dash.widgets.context_card import ContextCard
-from quota_dash.widgets.ratelimit_card import RateLimitCard
-
 
 class TokenCardTestApp(App):
     def compose(self) -> ComposeResult:
@@ -114,10 +116,6 @@ async def test_ratelimit_card_no_data():
 
 
 # Task 5: OverviewTable, HistoryTable, DetailPanel
-from quota_dash.widgets.overview_table import OverviewTable
-from quota_dash.widgets.history_table import HistoryTable
-from quota_dash.widgets.detail_panel import DetailPanel
-
 
 class OverviewTestApp(App):
     def compose(self) -> ComposeResult:
@@ -131,7 +129,7 @@ class HistoryTestApp(App):
 @pytest.mark.asyncio
 async def test_overview_table_mount():
     app = OverviewTestApp()
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         table = app.query_one(OverviewTable)
         assert table is not None
 
@@ -143,7 +141,11 @@ async def test_overview_table_refresh():
         table = app.query_one(OverviewTable)
         table.refresh_data(
             providers=["openai", "anthropic"],
-            quotas={"openai": QuotaInfo(provider="openai", balance_usd=47.32, limit_usd=100.0, usage_today_usd=3.20, last_updated=datetime.now(), source="manual", stale=False)},
+            quotas={"openai": QuotaInfo(
+                provider="openai", balance_usd=47.32, limit_usd=100.0,
+                usage_today_usd=3.20, last_updated=datetime.now(),
+                source="manual", stale=False,
+            )},
             tokens_today={"openai": 20500, "anthropic": 63900},
             context_pcts={"openai": 62.0, "anthropic": 35.0},
             rate_limits={"openai": 9000},
@@ -157,7 +159,7 @@ async def test_overview_table_refresh():
 @pytest.mark.asyncio
 async def test_history_table_mount():
     app = HistoryTestApp()
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         table = app.query_one(HistoryTable)
         assert table is not None
 
@@ -168,8 +170,18 @@ async def test_history_table_update():
     async with app.run_test() as pilot:
         table = app.query_one(HistoryTable)
         table.update_data([
-            {"timestamp": "2026-03-21T14:32:00", "model": "gpt-4", "total_tokens": 150, "endpoint": "/v1/chat/completions"},
-            {"timestamp": "2026-03-21T14:28:00", "model": "gpt-4", "total_tokens": 420, "endpoint": "/v1/chat/completions"},
+            {
+                "timestamp": "2026-03-21T14:32:00",
+                "model": "gpt-4",
+                "total_tokens": 150,
+                "endpoint": "/v1/chat/completions",
+            },
+            {
+                "timestamp": "2026-03-21T14:28:00",
+                "model": "gpt-4",
+                "total_tokens": 420,
+                "endpoint": "/v1/chat/completions",
+            },
         ])
         await pilot.pause()
 

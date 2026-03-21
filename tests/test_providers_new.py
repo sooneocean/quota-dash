@@ -9,7 +9,10 @@ from quota_dash.proxy.db import init_db, write_api_call, ApiCallRecord
 
 @pytest.mark.asyncio
 async def test_google_quota_manual():
-    config = ProviderConfig(enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp"), balance_usd=50.0, limit_usd=100.0)
+    config = ProviderConfig(
+        enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp"),
+        balance_usd=50.0, limit_usd=100.0,
+    )
     p = GoogleProvider(config)
     q = await p.get_quota()
     assert q.provider == "google"
@@ -40,7 +43,10 @@ async def test_google_context_window():
 
 @pytest.mark.asyncio
 async def test_groq_quota_manual():
-    config = ProviderConfig(enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp"), balance_usd=10.0, limit_usd=50.0)
+    config = ProviderConfig(
+        enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp"),
+        balance_usd=10.0, limit_usd=50.0,
+    )
     p = GroqProvider(config)
     q = await p.get_quota()
     assert q.provider == "groq"
@@ -55,7 +61,10 @@ async def test_groq_context_window():
 
 @pytest.mark.asyncio
 async def test_mistral_quota_manual():
-    config = ProviderConfig(enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp"), balance_usd=25.0, limit_usd=100.0)
+    config = ProviderConfig(
+        enabled=True, api_key_env="NONEXISTENT", log_path=Path("/tmp"),
+        balance_usd=25.0, limit_usd=100.0,
+    )
     p = MistralProvider(config)
     q = await p.get_quota()
     assert q.provider == "mistral"

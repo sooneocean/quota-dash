@@ -11,7 +11,7 @@ from quota_dash.widgets.history_table import HistoryTable
 @pytest.mark.asyncio
 async def test_app_launches():
     app = QuotaDashApp()
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         assert app.title == "quota-dash"
 
 
@@ -32,7 +32,7 @@ async def test_app_refresh_binding():
 @pytest.mark.asyncio
 async def test_app_has_new_widgets():
     app = QuotaDashApp()
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         assert app.query_one(OverviewTable) is not None
         assert app.query_one(DetailPanel) is not None
         assert app.query_one(HistoryTable) is not None
@@ -43,7 +43,7 @@ async def test_app_launches_without_ghostty():
     """Non-Ghostty environment should work fine — no ghostty module loaded."""
     with patch.dict("os.environ", {"TERM_PROGRAM": "iTerm2"}, clear=False):
         app = QuotaDashApp()
-        async with app.run_test() as pilot:
+        async with app.run_test() as _:
             assert app.title == "quota-dash"
             assert app._alert_monitor is None
 
@@ -53,7 +53,7 @@ async def test_app_launches_with_ghostty():
     """Ghostty environment should activate color enhancement and alert monitor."""
     with patch.dict("os.environ", {"TERM_PROGRAM": "ghostty"}, clear=False):
         app = QuotaDashApp()
-        async with app.run_test() as pilot:
+        async with app.run_test() as _:
             assert app.title == "quota-dash"
             assert app._alert_monitor is not None
 
@@ -86,7 +86,7 @@ async def test_app_watcher_not_started_without_db(tmp_path):
     proxy_cfg = ProxyConfig(db_path=db_path)
     config = AppConfig(polling_interval=9999, theme="default", proxy=proxy_cfg)
     app = QuotaDashApp(config=config)
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         assert app._watcher is None
 
 
@@ -184,7 +184,7 @@ async def test_app_watcher_started_when_db_exists(tmp_path):
 @pytest.mark.asyncio
 async def test_app_time_range_default():
     app = QuotaDashApp()
-    async with app.run_test() as pilot:
+    async with app.run_test() as _:
         assert app._time_range == "24h"
 
 

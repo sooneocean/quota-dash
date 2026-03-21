@@ -173,9 +173,15 @@ def init(output: str | None) -> None:
         limit = click.prompt("  Limit (USD, blank to skip)", default="", show_default=False)
         prov: dict = {"enabled": True, "api_key_env": key_env, "log_path": "~/"}
         if balance:
-            prov["balance_usd"] = float(balance)
+            try:
+                prov["balance_usd"] = float(balance)
+            except ValueError:
+                click.echo(f"  Invalid balance value: {balance}, skipping")
         if limit:
-            prov["limit_usd"] = float(limit)
+            try:
+                prov["limit_usd"] = float(limit)
+            except ValueError:
+                click.echo(f"  Invalid limit value: {limit}, skipping")
         providers[p] = prov
 
     # Proxy
@@ -374,7 +380,6 @@ def stats(period: str, config_path: str | None) -> None:
 @click.pass_context
 def export(ctx: click.Context, period: str, fmt: str, provider: str | None, output_path: str | None) -> None:
     """Export usage data from proxy database."""
-    import asyncio
     from quota_dash.export import query_calls, build_summary, format_csv, format_json
 
     config_path_str = ctx.obj.get("config_path") if ctx.obj else None

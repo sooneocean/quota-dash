@@ -1,12 +1,11 @@
 # tests/test_proxy_db.py
-import asyncio
-import tempfile
-from datetime import datetime
-from pathlib import Path
 
 import pytest
 
-from quota_dash.proxy.db import init_db, write_api_call, query_provider_data, query_recent_calls, query_token_history, ApiCallRecord
+from quota_dash.proxy.db import (
+    init_db, write_api_call, query_provider_data,
+    query_recent_calls, query_token_history, ApiCallRecord,
+)
 
 
 @pytest.fixture

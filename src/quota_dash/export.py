@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +28,7 @@ async def query_calls(
 ) -> list[dict[str, Any]]:
     """Query api_calls within the given period."""
     delta = _parse_period(period)
-    since = (datetime.utcnow() - delta).isoformat()
+    since = (datetime.now(timezone.utc) - delta).isoformat()
 
     async with aiosqlite.connect(db_path) as db:
         db.row_factory = aiosqlite.Row

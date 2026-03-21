@@ -87,7 +87,7 @@ class OverviewTable(Widget):
             row = [name, bal, tok, ctx]
             if wide:
                 rl = rate_limits.get(name)
-                row.append(f"{rl // 1000}K" if rl and rl >= 1000 else str(rl or "—"))
+                row.append(f"{rl // 1000}K" if rl is not None and rl >= 1000 else (str(rl) if rl is not None else "—"))
                 row.append(sources.get(name, "—"))
             dt.add_row(*row, key=name)
 

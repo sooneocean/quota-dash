@@ -1,7 +1,6 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -75,7 +74,11 @@ async def test_anthropic_get_quota_unavailable():
 @pytest.mark.asyncio
 async def test_anthropic_get_token_usage_from_log():
     entries = [
-        {"timestamp": "2026-03-20T10:00:00Z", "session_id": "s1", "model": "claude-opus-4-6", "input_tokens": 1000, "output_tokens": 500, "cost_usd": 0.03},
+        {
+            "timestamp": "2026-03-20T10:00:00Z", "session_id": "s1",
+            "model": "claude-opus-4-6", "input_tokens": 1000,
+            "output_tokens": 500, "cost_usd": 0.03,
+        },
     ]
     with tempfile.TemporaryDirectory() as td:
         costs_path = Path(td) / "metrics" / "costs.jsonl"

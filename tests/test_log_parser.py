@@ -7,8 +7,16 @@ from quota_dash.data.log_parser import parse_claude_costs_jsonl, parse_codex_log
 
 def test_parse_claude_costs_jsonl_with_data():
     entries = [
-        {"timestamp": "2026-03-20T10:00:00Z", "session_id": "s1", "model": "claude-opus-4-6", "input_tokens": 1500, "output_tokens": 800, "cost_usd": 0.05},
-        {"timestamp": "2026-03-20T10:05:00Z", "session_id": "s1", "model": "claude-opus-4-6", "input_tokens": 2000, "output_tokens": 1200, "cost_usd": 0.07},
+        {
+            "timestamp": "2026-03-20T10:00:00Z", "session_id": "s1",
+            "model": "claude-opus-4-6", "input_tokens": 1500,
+            "output_tokens": 800, "cost_usd": 0.05,
+        },
+        {
+            "timestamp": "2026-03-20T10:05:00Z", "session_id": "s1",
+            "model": "claude-opus-4-6", "input_tokens": 2000,
+            "output_tokens": 1200, "cost_usd": 0.07,
+        },
     ]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
         for entry in entries:
@@ -25,7 +33,10 @@ def test_parse_claude_costs_jsonl_with_data():
 
 def test_parse_claude_costs_jsonl_all_zeros():
     entries = [
-        {"timestamp": "2026-03-20T10:00:00Z", "session_id": "s1", "model": "unknown", "input_tokens": 0, "output_tokens": 0, "cost_usd": 0},
+        {
+            "timestamp": "2026-03-20T10:00:00Z", "session_id": "s1",
+            "model": "unknown", "input_tokens": 0, "output_tokens": 0, "cost_usd": 0,
+        },
     ]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
         for entry in entries:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from pathlib import Path
 
@@ -24,6 +25,8 @@ from quota_dash.widgets.token_card import TokenCard
 from quota_dash.widgets.context_card import ContextCard
 from quota_dash.widgets.ratelimit_card import RateLimitCard
 from quota_dash.widgets.history_table import HistoryTable
+
+logger = logging.getLogger(__name__)
 
 
 class QuotaDashApp(App):
@@ -92,7 +95,7 @@ class QuotaDashApp(App):
                     webhook_url=self._config.alerts.webhook_url,
                 )
             except Exception:
-                pass  # silently skip if ghostty module fails
+                logger.debug("Failed to initialize ghostty enhancements", exc_info=True)
 
         # Auto-start proxy if configured
         if self._config.proxy.auto_start and not self._config.proxy.db_path.exists():
@@ -105,7 +108,7 @@ class QuotaDashApp(App):
                 import time
                 time.sleep(1)
             except Exception:
-                pass
+                logger.debug("Failed to auto-start proxy", exc_info=True)
 
         # Start file watcher if proxy DB exists
         if self._config.proxy.db_path.exists():
@@ -117,7 +120,7 @@ class QuotaDashApp(App):
                 )
                 self.run_worker(self._watcher.start())  # type: ignore[union-attr]
             except Exception:
-                pass
+                logger.debug("Failed to start file watcher", exc_info=True)
 
     def on_unmount(self) -> None:
         if self._watcher:
