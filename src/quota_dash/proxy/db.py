@@ -193,7 +193,7 @@ async def query_token_history(
                     (provider, limit),
                 )
             rows = await cursor.fetchall()
-            return [(datetime.fromisoformat(ts), tok) for ts, tok in reversed(list(rows))]
+            return [(datetime.fromisoformat(ts), tok) for ts, tok in reversed(rows)]
     except Exception:
         logger.exception("Failed to query token history")
         return []
