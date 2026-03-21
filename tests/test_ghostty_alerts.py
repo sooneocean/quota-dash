@@ -269,3 +269,38 @@ def test_alert_monitor_with_webhook():
 def test_alert_monitor_without_webhook():
     monitor = AlertMonitor()
     assert monitor._webhook_url is None
+
+
+def test_update_terminal_title():
+    from quota_dash.ghostty.alerts import update_terminal_title
+    from quota_dash.data.store import DataStore
+    from quota_dash.models import QuotaInfo
+    from unittest.mock import patch
+    from datetime import datetime, timezone
+
+    store = DataStore()
+    store.update_quota("openai", QuotaInfo(
+        provider="openai", balance_usd=247.0, limit_usd=500.0,
+        usage_today_usd=None, last_updated=datetime.now(timezone.utc),
+        source="manual", stale=False,
+    ))
+
+    with patch("sys.stdout") as mock_stdout:
+        update_terminal_title(store)
+        mock_stdout.write.assert_called_once()
+        written = mock_stdout.write.call_args[0][0]
+        assert "\x1b]2;" in written  # OSC 2
+        assert "247" in written
+        assert "\x07" in written
+
+
+def test_update_terminal_title_no_data():
+    from quota_dash.ghostty.alerts import update_terminal_title
+    from quota_dash.data.store import DataStore
+    from unittest.mock import patch
+
+    store = DataStore()
+    with patch("sys.stdout") as mock_stdout:
+        update_terminal_title(store)
+        written = mock_stdout.write.call_args[0][0]
+        assert "$—" in written

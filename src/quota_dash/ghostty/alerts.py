@@ -46,6 +46,23 @@ async def send_webhook(url: str, message: str) -> None:
         logger.warning("Webhook notification failed: %s", url)
 
 
+def update_terminal_title(store: DataStore) -> None:
+    """Set terminal title to show quota summary via OSC 2."""
+    try:
+        balance = store.total_balance()
+        tokens = store.total_tokens_today()
+
+        bal_str = f"${balance:.0f}" if balance else "$—"
+        tok_str = f"{tokens / 1000:.0f}K" if tokens >= 1000 else str(tokens)
+
+        title = f"quota-dash | {bal_str} | {tok_str} tok"
+        # OSC 2 sets terminal title (widely supported, not just Ghostty)
+        sys.stdout.write(f"\x1b]2;{title}\x07")
+        sys.stdout.flush()
+    except Exception:
+        pass  # never crash for a cosmetic feature
+
+
 class AlertMonitor:
     def __init__(self, warning: int = 50, alert: int = 20, critical: int = 5, webhook_url: str | None = None) -> None:
         self._notified: set[tuple[str, str]] = set()

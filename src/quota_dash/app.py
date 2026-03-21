@@ -214,6 +214,11 @@ class QuotaDashApp(App):
         if self._alert_monitor:
             self._alert_monitor.check(self, self._store)  # type: ignore[attr-defined]
 
+        # Update terminal title (Ghostty)
+        if self._alert_monitor is not None:  # means Ghostty is detected
+            from quota_dash.ghostty.alerts import update_terminal_title
+            update_terminal_title(self._store)
+
     async def _update_detail(self, provider_name: str) -> None:
         quota = self._store.get_quota(provider_name)
         tokens = self._store.get_tokens(provider_name)
