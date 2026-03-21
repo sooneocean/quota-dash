@@ -57,3 +57,26 @@ def test_cli_help():
     result = runner.invoke(main, ["--help"])
     assert result.exit_code == 0
     assert "quota-dash" in result.output.lower() or "--once" in result.output
+
+
+def test_cli_proxy_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "--help"])
+    assert result.exit_code == 0
+    assert "start" in result.output
+    assert "stop" in result.output
+    assert "status" in result.output
+
+
+def test_cli_proxy_status_not_running():
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "status"])
+    assert result.exit_code == 0
+    assert "not running" in result.output.lower() or "No proxy" in result.output
+
+
+def test_cli_version():
+    runner = CliRunner()
+    result = runner.invoke(main, ["--version"])
+    assert result.exit_code == 0
+    assert "quota-dash" in result.output

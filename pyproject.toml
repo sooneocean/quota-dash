@@ -16,7 +16,6 @@ keywords = ["llm", "quota", "dashboard", "tui", "textual", "ghostty", "openai", 
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
-    "Framework :: Textual",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
