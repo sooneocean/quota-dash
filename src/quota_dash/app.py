@@ -85,6 +85,7 @@ class QuotaDashApp(App):
                     warning=self._config.alerts.warning,
                     alert=self._config.alerts.alert,
                     critical=self._config.alerts.critical,
+                    webhook_url=self._config.alerts.webhook_url,
                 )
             except Exception:
                 pass  # silently skip if ghostty module fails

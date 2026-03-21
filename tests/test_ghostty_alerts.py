@@ -1,6 +1,8 @@
 # tests/test_ghostty_alerts.py
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from quota_dash.ghostty.alerts import AlertMonitor, send_notification, send_bell
 from quota_dash.data.store import DataStore
@@ -209,3 +211,61 @@ def test_reset_border_silently_ignores_query_error():
     app.query.side_effect = Exception("no widgets")
     # Must not raise
     monitor._reset_border(app, "openai")
+
+
+@pytest.mark.asyncio
+async def test_send_webhook_slack():
+    from quota_dash.ghostty.alerts import send_webhook
+
+    with patch("quota_dash.ghostty.alerts._httpx.AsyncClient") as mock_cls:
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_cls.return_value = mock_client
+
+        await send_webhook("https://hooks.slack.com/services/T/B/x", "test alert")
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[1]["json"]["text"] == "test alert"
+
+
+@pytest.mark.asyncio
+async def test_send_webhook_discord():
+    from quota_dash.ghostty.alerts import send_webhook
+
+    with patch("quota_dash.ghostty.alerts._httpx.AsyncClient") as mock_cls:
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_cls.return_value = mock_client
+
+        await send_webhook("https://discord.com/api/webhooks/123/abc", "test alert")
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[1]["json"]["content"] == "test alert"
+
+
+@pytest.mark.asyncio
+async def test_send_webhook_failure_no_crash():
+    from quota_dash.ghostty.alerts import send_webhook
+
+    with patch("quota_dash.ghostty.alerts._httpx.AsyncClient") as mock_cls:
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(side_effect=Exception("network error"))
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_cls.return_value = mock_client
+
+        await send_webhook("https://example.com/webhook", "test")  # should not raise
+
+
+def test_alert_monitor_with_webhook():
+    monitor = AlertMonitor(warning=50, alert=20, critical=5, webhook_url="https://hooks.slack.com/test")
+    assert monitor._webhook_url == "https://hooks.slack.com/test"
+
+
+def test_alert_monitor_without_webhook():
+    monitor = AlertMonitor()
+    assert monitor._webhook_url is None

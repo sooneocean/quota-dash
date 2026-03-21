@@ -34,6 +34,7 @@ class AlertConfig:
     warning: int = 50
     alert: int = 20
     critical: int = 5
+    webhook_url: str | None = None  # Slack/Discord/generic webhook URL
 
 
 @dataclass
@@ -83,6 +84,7 @@ def load_config(path: Path | None) -> AppConfig:
         warning=alerts_raw.get("warning", 50),
         alert=alerts_raw.get("alert", 20),
         critical=alerts_raw.get("critical", 5),
+        webhook_url=alerts_raw.get("webhook_url"),
     )
 
     return AppConfig(

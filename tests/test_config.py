@@ -2,7 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from quota_dash.config import load_config, AppConfig, ProviderConfig, ProxyConfig
+from quota_dash.config import load_config
 
 
 SAMPLE_TOML = """\
@@ -106,3 +106,29 @@ def test_load_config_alert_defaults():
 def test_proxy_auto_start_default():
     config = load_config(None)
     assert config.proxy.auto_start is False
+
+
+ALERTS_WEBHOOK_TOML = """\
+[general]
+polling_interval = 60
+
+[alerts]
+warning = 50
+alert = 20
+critical = 5
+webhook_url = "https://hooks.slack.com/services/T/B/x"
+"""
+
+
+def test_load_config_webhook_url():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+        f.write(ALERTS_WEBHOOK_TOML)
+        f.flush()
+        config = load_config(Path(f.name))
+    os.unlink(f.name)
+    assert config.alerts.webhook_url == "https://hooks.slack.com/services/T/B/x"
+
+
+def test_load_config_webhook_default_none():
+    config = load_config(None)
+    assert config.alerts.webhook_url is None

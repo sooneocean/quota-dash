@@ -5,6 +5,7 @@ import logging
 import sys
 from typing import Any
 
+import httpx as _httpx
 
 from quota_dash.data.store import DataStore
 
@@ -27,14 +28,33 @@ def send_bell() -> None:
     sys.stdout.flush()
 
 
+async def send_webhook(url: str, message: str) -> None:
+    """Send alert to webhook URL. Auto-detects Slack/Discord format."""
+    try:
+        # Detect platform by URL
+        if "hooks.slack.com" in url or "slack" in url:
+            payload = {"text": message}
+        elif "discord.com/api/webhooks" in url:
+            payload = {"content": message}
+        else:
+            # Generic webhook
+            payload = {"text": message, "message": message}
+
+        async with _httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(url, json=payload)
+    except Exception:
+        logger.warning("Webhook notification failed: %s", url)
+
+
 class AlertMonitor:
-    def __init__(self, warning: int = 50, alert: int = 20, critical: int = 5) -> None:
+    def __init__(self, warning: int = 50, alert: int = 20, critical: int = 5, webhook_url: str | None = None) -> None:
         self._notified: set[tuple[str, str]] = set()
         self._thresholds = [
             ("critical", critical / 100),
             ("alert", alert / 100),
             ("warning", warning / 100),
         ]
+        self._webhook_url = webhook_url
 
     def check(self, app: Any, store: DataStore) -> list[dict]:
         """Check all providers against alert thresholds.
@@ -81,7 +101,11 @@ class AlertMonitor:
 
                 if triggered_level in ("alert", "critical"):
                     pct = f"{ratio * 100:.0f}%"
-                    send_notification(f"quota-dash: {provider_name} balance at {pct}")
+                    msg = f"quota-dash: {provider_name} balance at {pct}"
+                    send_notification(msg)
+                    if self._webhook_url:
+                        import asyncio
+                        asyncio.create_task(send_webhook(self._webhook_url, msg))
 
                 if triggered_level == "critical":
                     send_bell()
