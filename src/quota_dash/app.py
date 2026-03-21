@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from pathlib import Path
 
@@ -133,25 +134,38 @@ class QuotaDashApp(App):
     def _poll(self) -> None:
         self.run_worker(self._refresh_all())
 
+    async def _fetch_provider(self, name: str, provider: Provider) -> tuple:
+        """Fetch all data for a single provider."""
+        quota = await provider.get_quota()
+        tokens = await provider.get_token_usage()
+        context = await provider.get_context_window()
+        proxy_data = await provider.get_proxy_data()
+        return name, quota, tokens, context, proxy_data
+
     async def _refresh_all(self) -> None:
-        # Refresh ALL providers
+        # Refresh ALL providers in parallel
         provider_names = list(self._providers.keys())
         tokens_today: dict[str, int] = {}
         context_pcts: dict[str, float] = {}
         rate_limits: dict[str, int | None] = {}
         sources: dict[str, str] = {}
 
-        for name, provider in self._providers.items():
-            quota = await provider.get_quota()
-            tokens = await provider.get_token_usage()
-            context = await provider.get_context_window()
+        # Fetch all providers concurrently
+        results = await asyncio.gather(
+            *(self._fetch_provider(name, prov) for name, prov in self._providers.items()),
+            return_exceptions=True,
+        )
+
+        for result in results:
+            if isinstance(result, BaseException):
+                continue  # skip failed providers
+            name, quota, tokens, context, proxy_data = result
 
             self._store.update_quota(name, quota)
             self._store.update_tokens(name, tokens)
             self._store.update_context(name, context)
 
             # Get proxy data if available
-            proxy_data = await provider.get_proxy_data()
             if proxy_data:
                 self._store.update_proxy(name, proxy_data)
                 tokens_today[name] = proxy_data.tokens_today
