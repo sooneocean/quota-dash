@@ -80,9 +80,26 @@ class QuotaDashApp(App):
                 from quota_dash.ghostty.colors import enhance_widgets
                 from quota_dash.ghostty.alerts import AlertMonitor
                 enhance_widgets(self)
-                self._alert_monitor = AlertMonitor()  # type: ignore[assignment]
+                self._alert_monitor = AlertMonitor(  # type: ignore[assignment]
+                    warning=self._config.alerts.warning,
+                    alert=self._config.alerts.alert,
+                    critical=self._config.alerts.critical,
+                )
             except Exception:
                 pass  # silently skip if ghostty module fails
+
+        # Auto-start proxy if configured
+        if self._config.proxy.auto_start and not self._config.proxy.db_path.exists():
+            try:
+                import subprocess
+                subprocess.Popen(
+                    ["quota-dash", "proxy", "start", "--port", str(self._config.proxy.port)],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+                import time
+                time.sleep(1)
+            except Exception:
+                pass
 
         # Start file watcher if proxy DB exists
         if self._config.proxy.db_path.exists():

@@ -94,3 +94,10 @@ def test_load_config_proxy_defaults():
     assert config.proxy.enabled is False
     assert config.proxy.port == 8300
     assert config.proxy.targets["openai"] == "https://api.openai.com"
+
+
+def test_load_config_alert_defaults():
+    config = load_config(None)
+    assert config.alerts.warning == 50
+    assert config.alerts.alert == 20
+    assert config.alerts.critical == 5

@@ -10,12 +10,6 @@ from quota_dash.data.store import DataStore
 
 logger = logging.getLogger(__name__)
 
-THRESHOLDS = [
-    ("critical", 0.05),
-    ("alert", 0.20),
-    ("warning", 0.50),
-]
-
 BORDER_COLORS = {
     "warning": "yellow",
     "alert": "darkorange",
@@ -34,8 +28,13 @@ def send_bell() -> None:
 
 
 class AlertMonitor:
-    def __init__(self) -> None:
+    def __init__(self, warning: int = 50, alert: int = 20, critical: int = 5) -> None:
         self._notified: set[tuple[str, str]] = set()
+        self._thresholds = [
+            ("critical", critical / 100),
+            ("alert", alert / 100),
+            ("warning", warning / 100),
+        ]
 
     def check(self, app: Any, store: DataStore) -> list[dict]:
         """Check all providers against alert thresholds.
@@ -56,7 +55,7 @@ class AlertMonitor:
 
                 # Determine highest triggered level
                 triggered_level: str | None = None
-                for level, threshold in THRESHOLDS:
+                for level, threshold in self._thresholds:
                     if ratio < threshold:
                         triggered_level = level
                         break

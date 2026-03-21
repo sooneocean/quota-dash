@@ -26,6 +26,14 @@ class ProxyConfig:
         "openai": "https://api.openai.com",
         "anthropic": "https://api.anthropic.com",
     })
+    auto_start: bool = False
+
+
+@dataclass
+class AlertConfig:
+    warning: int = 50
+    alert: int = 20
+    critical: int = 5
 
 
 @dataclass
@@ -35,6 +43,7 @@ class AppConfig:
     mode: str = "dashboard"
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
     proxy: ProxyConfig = field(default_factory=ProxyConfig)
+    alerts: AlertConfig = field(default_factory=AlertConfig)
 
 
 def load_config(path: Path | None) -> AppConfig:
@@ -66,6 +75,14 @@ def load_config(path: Path | None) -> AppConfig:
         db_path=Path(proxy_raw.get("db_path", "~/.config/quota-dash/usage.db")).expanduser(),
         log_path=Path(proxy_raw.get("log_path", "~/.config/quota-dash/proxy.log")).expanduser(),
         targets={**ProxyConfig().targets, **proxy_targets},
+        auto_start=proxy_raw.get("auto_start", False),
+    )
+
+    alerts_raw = raw.get("alerts", {})
+    alerts = AlertConfig(
+        warning=alerts_raw.get("warning", 50),
+        alert=alerts_raw.get("alert", 20),
+        critical=alerts_raw.get("critical", 5),
     )
 
     return AppConfig(
@@ -74,4 +91,5 @@ def load_config(path: Path | None) -> AppConfig:
         mode=general.get("mode", "dashboard"),
         providers=providers,
         proxy=proxy,
+        alerts=alerts,
     )
