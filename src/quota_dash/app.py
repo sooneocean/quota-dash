@@ -5,18 +5,21 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header
+from textual.widgets import DataTable
 
 from quota_dash.config import AppConfig
 from quota_dash.data.store import DataStore
 from quota_dash.providers.anthropic import AnthropicProvider
 from quota_dash.providers.base import Provider
 from quota_dash.providers.openai import OpenAIProvider
-from quota_dash.widgets.context_gauge import ContextGauge
-from quota_dash.widgets.provider_list import ProviderList
-from quota_dash.widgets.quota_panel import QuotaPanel
-from quota_dash.widgets.token_panel import TokenPanel
+from quota_dash.widgets.overview_table import OverviewTable
+from quota_dash.widgets.detail_panel import DetailPanel
+from quota_dash.widgets.quota_card import QuotaCard
+from quota_dash.widgets.token_card import TokenCard
+from quota_dash.widgets.context_card import ContextCard
+from quota_dash.widgets.ratelimit_card import RateLimitCard
+from quota_dash.widgets.history_table import HistoryTable
 
 
 class QuotaDashApp(App):
@@ -25,8 +28,6 @@ class QuotaDashApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("r", "refresh", "Refresh"),
-        Binding("up", "prev_provider", "Previous", show=False),
-        Binding("down", "next_provider", "Next", show=False),
         Binding("tab", "focus_next", "Next Panel", show=False),
         Binding("question_mark", "toggle_help", "Help"),
     ]
@@ -40,87 +41,151 @@ class QuotaDashApp(App):
         self._theme_override = theme_override
         self._store = DataStore()
         self._providers: dict[str, Provider] = {}
+        self._selected_provider: str | None = None
+        self._alert_monitor = None
 
         css_path = self._resolve_theme()
         css_path_arg = [str(css_path)] if css_path else None
-
         super().__init__(css_path=css_path_arg)
 
     def _resolve_theme(self) -> Path | None:
         theme = self._theme_override or self._config.theme
         themes_dir = Path(__file__).parent / "themes"
-
         if theme == "auto":
             term = os.environ.get("TERM_PROGRAM", "")
             theme = "ghostty" if term == "ghostty" else "default"
-
         theme_file = themes_dir / f"{theme}.tcss"
         return theme_file if theme_file.exists() else None
 
     def compose(self) -> ComposeResult:
         yield Header()
-        with Horizontal():
-            yield ProviderList()
-            with Vertical(id="main-panel"):
-                yield QuotaPanel()
-                yield TokenPanel()
-                yield ContextGauge()
+        yield OverviewTable()
+        yield DetailPanel()
+        yield HistoryTable()
         yield Footer()
 
     async def on_mount(self) -> None:
         self._init_providers()
-        provider_names = list(self._providers.keys())
-        self.query_one(ProviderList).set_providers(provider_names)
         await self._refresh_all()
         self.set_interval(self._config.polling_interval, self._poll)
 
+        # Ghostty enhancements (lazy import, only if detected)
+        from quota_dash.ghostty.detect import is_ghostty
+        if is_ghostty():
+            try:
+                from quota_dash.ghostty.colors import enhance_widgets
+                from quota_dash.ghostty.alerts import AlertMonitor
+                enhance_widgets(self)
+                self._alert_monitor = AlertMonitor()
+            except Exception:
+                pass  # silently skip if ghostty module fails
+
     def _init_providers(self) -> None:
         provider_map = {"openai": OpenAIProvider, "anthropic": AnthropicProvider}
+        db_path = self._config.proxy.db_path
         for name, pconfig in self._config.providers.items():
             if pconfig.enabled and name in provider_map:
-                self._providers[name] = provider_map[name](pconfig)
+                self._providers[name] = provider_map[name](pconfig, db_path=db_path)
 
     def _poll(self) -> None:
-        """Sync wrapper for set_interval — schedules async refresh."""
         self.run_worker(self._refresh_all())
 
     async def _refresh_all(self) -> None:
-        plist = self.query_one(ProviderList)
-        selected = plist.selected_provider
-        if not selected and self._providers:
-            selected = list(self._providers.keys())[0]
+        # Refresh ALL providers
+        provider_names = list(self._providers.keys())
+        tokens_today: dict[str, int] = {}
+        context_pcts: dict[str, float] = {}
+        rate_limits: dict[str, int | None] = {}
+        sources: dict[str, str] = {}
 
-        if selected and selected in self._providers:
-            provider = self._providers[selected]
+        for name, provider in self._providers.items():
             quota = await provider.get_quota()
             tokens = await provider.get_token_usage()
             context = await provider.get_context_window()
 
-            self._store.update_quota(selected, quota)
-            self._store.update_tokens(selected, tokens)
-            self._store.update_context(selected, context)
+            self._store.update_quota(name, quota)
+            self._store.update_tokens(name, tokens)
+            self._store.update_context(name, context)
 
-            self.query_one(QuotaPanel).update_data(quota)
-            self.query_one(TokenPanel).update_data(tokens)
-            self.query_one(ContextGauge).update_data(context)
+            # Get proxy data if available
+            proxy_data = await provider.get_proxy_data()
+            if proxy_data:
+                self._store.update_proxy(name, proxy_data)
+                tokens_today[name] = proxy_data.tokens_today
+                rate_limits[name] = proxy_data.ratelimit_remaining_tokens
+                sources[name] = "proxy"
+            else:
+                tokens_today[name] = tokens.total_tokens
+                rate_limits[name] = None
+                sources[name] = tokens.source
 
-        # Update sidebar quick stats from all providers
-        plist = self.query_one(ProviderList)
-        plist.set_quick_stats(
-            self._store.total_balance(),
-            self._store.total_usage_today(),
+            context_pcts[name] = context.percent_used
+
+        # Update OverviewTable
+        quotas = {n: self._store.get_quota(n) for n in provider_names if self._store.get_quota(n)}
+        self.query_one(OverviewTable).refresh_data(
+            providers=provider_names,
+            quotas=quotas,
+            tokens_today=tokens_today,
+            context_pcts=context_pcts,
+            rate_limits=rate_limits,
+            sources=sources,
+            total_balance=self._store.total_balance(),
+            total_tokens=self._store.total_tokens_today(),
         )
+
+        # Update DetailPanel for selected provider
+        if not self._selected_provider and provider_names:
+            self._selected_provider = provider_names[0]
+
+        if self._selected_provider:
+            await self._update_detail(self._selected_provider)
+
+        # Alert monitoring (Ghostty only)
+        if self._alert_monitor:
+            self._alert_monitor.check(self, self._store)
+
+    async def _update_detail(self, provider_name: str) -> None:
+        quota = self._store.get_quota(provider_name)
+        tokens = self._store.get_tokens(provider_name)
+        context = self._store.get_context(provider_name)
+        proxy = self._store.get_proxy(provider_name)
+
+        panel = self.query_one(DetailPanel)
+        if quota:
+            panel.query_one(QuotaCard).update_data(quota)
+        if tokens:
+            # Try to get sparkline data from proxy DB
+            sparkline_data = None
+            db_path = self._config.proxy.db_path
+            if db_path and db_path.exists():
+                from quota_dash.proxy.db import query_token_history
+                history = await query_token_history(db_path, provider_name)
+                if history:
+                    sparkline_data = [tok for _, tok in history]
+            panel.query_one(TokenCard).update_data(tokens, sparkline_data=sparkline_data)
+        if context:
+            panel.query_one(ContextCard).update_data(context)
+
+        panel.query_one(RateLimitCard).update_data(proxy)
+
+        # Update HistoryTable
+        history_table = self.query_one(HistoryTable)
+        db_path = self._config.proxy.db_path
+        if db_path and db_path.exists():
+            from quota_dash.proxy.db import query_recent_calls
+            calls = await query_recent_calls(db_path, provider_name)
+            history_table.update_data(calls)
+        else:
+            history_table.update_data([])
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if event.row_key and event.row_key.value != "__total__":
+            self._selected_provider = str(event.row_key.value)
+            self.run_worker(self._update_detail(self._selected_provider))
 
     async def action_refresh(self) -> None:
         await self._refresh_all()
-
-    def action_next_provider(self) -> None:
-        self.query_one(ProviderList).select_next()
-        self.run_worker(self._refresh_all())
-
-    def action_prev_provider(self) -> None:
-        self.query_one(ProviderList).select_prev()
-        self.run_worker(self._refresh_all())
 
     def action_toggle_help(self) -> None:
         self.notify(
