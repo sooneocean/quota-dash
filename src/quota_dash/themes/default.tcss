@@ -1,41 +1,35 @@
-/* quota-dash/src/quota_dash/themes/default.tcss */
+/* src/quota_dash/themes/default.tcss */
 Screen {
-    layout: horizontal;
+    layout: vertical;
     background: $surface;
 }
 
-ProviderList {
-    width: 24;
-    height: 100%;
-    border-right: solid $primary;
-    padding: 1;
-    background: $panel;
-}
-
-#main-panel {
-    width: 1fr;
-    height: 100%;
-    padding: 1;
-}
-
-QuotaPanel {
+OverviewTable {
     height: auto;
-    min-height: 5;
-    padding: 1;
-    border-bottom: solid $primary-muted;
+    max-height: 12;
+    margin-bottom: 1;
 }
 
-TokenPanel {
+DetailPanel {
     height: auto;
-    min-height: 5;
-    padding: 1;
-    border-bottom: solid $primary-muted;
 }
 
-ContextGauge {
+#detail-grid {
+    layout: grid;
+    grid-size: 2 2;
+    grid-gutter: 1;
+}
+
+@media (width < 120) {
+    #detail-grid {
+        grid-size: 1;
+    }
+}
+
+HistoryTable {
     height: auto;
-    min-height: 4;
-    padding: 1;
+    max-height: 10;
+    margin-top: 1;
 }
 
 Footer {
