@@ -230,3 +230,26 @@ async def query_sessions(db_path: Path) -> list[dict]:
                ORDER BY started DESC"""
         )
         return [dict(row) for row in await cursor.fetchall()]
+
+
+async def query_session_calls(db_path: Path, session_tag: str) -> list[dict]:
+    """Get all API calls for a specific session."""
+    if not _HAS_AIOSQLITE:
+        return []
+    try:
+        import aiosqlite
+        async with aiosqlite.connect(db_path) as db:
+            await _migrate_session_column(db)
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """SELECT timestamp, provider, model, endpoint,
+                          input_tokens, output_tokens, total_tokens
+                   FROM api_calls
+                   WHERE session_tag = ?
+                   ORDER BY timestamp ASC""",
+                (session_tag,),
+            )
+            return [dict(row) for row in await cursor.fetchall()]
+    except Exception:
+        logger.exception("Failed to query session calls")
+        return []

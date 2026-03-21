@@ -444,6 +444,80 @@ def sessions(config_path: str | None) -> None:
 
 
 @main.command()
+@click.argument("session_name")
+@click.option("--config", "config_path", default=None, type=click.Path())
+def replay(session_name: str, config_path: str | None) -> None:
+    """Replay a session's API call timeline."""
+    from rich.panel import Panel
+
+    path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
+    config = load_config(path if path.exists() else None)
+    db_path = config.proxy.db_path
+    if not db_path.exists():
+        click.echo("No proxy database found.")
+        return
+
+    from quota_dash.proxy.db import query_session_calls
+    calls = asyncio.run(query_session_calls(db_path, session_name))
+
+    if not calls:
+        click.echo(f"No calls found for session '{session_name}'.")
+        click.echo("Available sessions: quota-dash sessions")
+        return
+
+    console = Console()
+
+    # Summary stats
+    total_tokens = sum(c.get("total_tokens", 0) or 0 for c in calls)
+    total_input = sum(c.get("input_tokens", 0) or 0 for c in calls)
+    total_output = sum(c.get("output_tokens", 0) or 0 for c in calls)
+    providers = set(c.get("provider", "unknown") for c in calls)
+    models = set(c.get("model", "unknown") for c in calls if c.get("model"))
+    first_ts = calls[0].get("timestamp", "—")
+    last_ts = calls[-1].get("timestamp", "—")
+
+    # Summary panel
+    summary = (
+        f"[bold]Session:[/] {session_name}\n"
+        f"[bold]Period:[/] {str(first_ts)[:16]} → {str(last_ts)[:16]}\n"
+        f"[bold]Calls:[/] {len(calls)}  [bold]Tokens:[/] {_fmt_tokens(total_tokens)} "
+        f"(in: {_fmt_tokens(total_input)} / out: {_fmt_tokens(total_output)})\n"
+        f"[bold]Providers:[/] {', '.join(sorted(providers))}  "
+        f"[bold]Models:[/] {', '.join(sorted(models)) or '—'}"
+    )
+    console.print(Panel(summary, title="[bold]Session Replay[/]", border_style="cyan"))
+
+    # Timeline table
+    table = Table(show_header=True, header_style="bold", border_style="dim")
+    table.add_column("#", justify="right", style="dim")
+    table.add_column("Time")
+    table.add_column("Provider")
+    table.add_column("Model")
+    table.add_column("In", justify="right")
+    table.add_column("Out", justify="right")
+    table.add_column("Total", justify="right")
+    table.add_column("Endpoint", style="dim")
+
+    for i, call in enumerate(calls, 1):
+        ts = str(call.get("timestamp", ""))
+        if "T" in ts:
+            ts = ts.split("T")[1][:8]  # HH:MM:SS
+
+        table.add_row(
+            str(i),
+            ts,
+            call.get("provider", "—"),
+            call.get("model", "—"),
+            _fmt_tokens(call.get("input_tokens", 0) or 0),
+            _fmt_tokens(call.get("output_tokens", 0) or 0),
+            _fmt_tokens(call.get("total_tokens", 0) or 0),
+            call.get("endpoint", "—"),
+        )
+
+    console.print(table)
+
+
+@main.command()
 @click.option("--config", "config_path", default=None, type=click.Path(), help="Config file path")
 def doctor(config_path: str | None) -> None:
     """Check quota-dash configuration and connectivity."""

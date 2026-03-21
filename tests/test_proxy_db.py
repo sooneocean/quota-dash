@@ -4,7 +4,8 @@ import pytest
 
 from quota_dash.proxy.db import (
     init_db, write_api_call, query_provider_data,
-    query_recent_calls, query_token_history, query_sessions, ApiCallRecord,
+    query_recent_calls, query_token_history, query_sessions,
+    query_session_calls, ApiCallRecord,
 )
 
 
@@ -211,3 +212,38 @@ async def test_session_tag_multiple_sessions(db_path):
     assert "beta" in session_tags
     alpha = next(s for s in sessions if s["session_tag"] == "alpha")
     assert alpha["calls"] == 2
+
+
+@pytest.mark.asyncio
+async def test_query_session_calls(db_path):
+    await init_db(db_path)
+    for i in range(3):
+        record = ApiCallRecord(
+            provider="openai", model="gpt-4", endpoint="/v1/chat/completions",
+            input_tokens=100 * (i + 1), output_tokens=50 * (i + 1),
+            total_tokens=150 * (i + 1),
+            ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+            ratelimit_reset=None, request_id=None, target_url="https://api.openai.com",
+            session_tag="test-session",
+        )
+        await write_api_call(db_path, record)
+
+    # Also write one without session tag
+    await write_api_call(db_path, ApiCallRecord(
+        provider="openai", model="gpt-4", endpoint="/v1/chat/completions",
+        input_tokens=999, output_tokens=999, total_tokens=1998,
+        ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+        ratelimit_reset=None, request_id=None, target_url="https://api.openai.com",
+    ))
+
+    calls = await query_session_calls(db_path, "test-session")
+    assert len(calls) == 3
+    assert calls[0]["input_tokens"] == 100
+    assert calls[2]["input_tokens"] == 300
+
+
+@pytest.mark.asyncio
+async def test_query_session_calls_empty(db_path):
+    await init_db(db_path)
+    calls = await query_session_calls(db_path, "nonexistent")
+    assert calls == []

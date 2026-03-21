@@ -376,3 +376,77 @@ db_path = "{db_path}"
     result = runner.invoke(main, ["sessions", "--config", str(config_file)])
     assert result.exit_code == 0
     assert "No sessions" in result.output
+
+
+def test_cli_replay_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["replay", "--help"])
+    assert result.exit_code == 0
+    assert "session" in result.output.lower() or "SESSION_NAME" in result.output
+
+
+def test_cli_replay_no_db(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
+    runner = CliRunner()
+    result = runner.invoke(main, ["replay", "test-session"])
+    assert result.exit_code == 0
+    assert "No proxy database" in result.output or "No calls" in result.output
+
+
+def test_cli_replay_no_calls(tmp_path):
+    """replay with DB but no matching session should say no calls found."""
+    import asyncio
+    from quota_dash.proxy.db import init_db
+
+    db_path = tmp_path / "usage.db"
+    asyncio.run(init_db(db_path))
+
+    config_content = f"""\
+[general]
+polling_interval = 60
+theme = "default"
+[proxy]
+db_path = "{db_path}"
+"""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(config_content)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["replay", "nonexistent-session", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert "No calls found" in result.output
+
+
+def test_cli_replay_with_data(tmp_path):
+    """replay with matching session data should print summary panel and table."""
+    import asyncio
+    from quota_dash.proxy.db import init_db, write_api_call, ApiCallRecord
+
+    db_path = tmp_path / "usage.db"
+    asyncio.run(init_db(db_path))
+    for i in range(3):
+        asyncio.run(write_api_call(db_path, ApiCallRecord(
+            provider="openai", model="gpt-4", endpoint="/v1/chat/completions",
+            input_tokens=100 * (i + 1), output_tokens=50 * (i + 1),
+            total_tokens=150 * (i + 1),
+            ratelimit_remaining_tokens=None, ratelimit_remaining_requests=None,
+            ratelimit_reset=None, request_id=None, target_url="https://api.openai.com",
+            session_tag="my-replay-session",
+        )))
+
+    config_content = f"""\
+[general]
+polling_interval = 60
+theme = "default"
+[proxy]
+db_path = "{db_path}"
+"""
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(config_content)
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["replay", "my-replay-session", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert "my-replay-session" in result.output
+    assert "openai" in result.output
+    assert "gpt-4" in result.output
