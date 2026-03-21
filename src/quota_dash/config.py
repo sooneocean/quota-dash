@@ -42,6 +42,7 @@ class AppConfig:
     polling_interval: int = 60
     theme: str = "auto"
     mode: str = "dashboard"
+    language: str = "en"
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
     proxy: ProxyConfig = field(default_factory=ProxyConfig)
     alerts: AlertConfig = field(default_factory=AlertConfig)
@@ -91,6 +92,7 @@ def load_config(path: Path | None) -> AppConfig:
         polling_interval=general.get("polling_interval", 60),
         theme=general.get("theme", "auto"),
         mode=general.get("mode", "dashboard"),
+        language=general.get("language", "en"),
         providers=providers,
         proxy=proxy,
         alerts=alerts,

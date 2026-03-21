@@ -130,6 +130,31 @@ def main(
         app.run()
 
 
+@main.command()
+@click.option("--theme", default=None, help="Force theme: default | ghostty")
+@click.option("--with-proxy", is_flag=True, help="Auto-start proxy")
+@click.option("--proxy-port", default=None, type=int, help="Proxy port")
+@click.option("--config", "config_path", default=None, type=click.Path(), help="Config file path")
+def tui(theme: str | None, with_proxy: bool, proxy_port: int | None, config_path: str | None) -> None:
+    """Launch the TUI dashboard."""
+    path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
+    config = load_config(path if path.exists() else None)
+
+    if with_proxy:
+        import subprocess
+        import time
+        port = proxy_port or config.proxy.port
+        subprocess.Popen(
+            ["quota-dash", "proxy", "start", "--port", str(port)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        time.sleep(1)
+
+    from quota_dash.app import QuotaDashApp
+    app = QuotaDashApp(config=config, theme_override=theme)
+    app.run()
+
+
 @main.group()
 def config() -> None:
     """Manage configuration."""

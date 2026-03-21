@@ -77,6 +77,9 @@ class QuotaDashApp(App):
         yield Footer()
 
     async def on_mount(self) -> None:
+        from quota_dash.i18n import set_language
+        set_language(self._config.language)
+
         self._init_providers()
         await self._refresh_all()
         self.set_interval(self._config.polling_interval, self._poll)

@@ -201,6 +201,13 @@ def test_cli_proxy_install_executes(tmp_path, monkeypatch):
     assert any("launchctl" in str(c) for c in calls)
 
 
+def test_cli_tui_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["tui", "--help"])
+    assert result.exit_code == 0
+    assert "dashboard" in result.output.lower() or "--theme" in result.output
+
+
 def test_cli_proxy_uninstall_with_service(tmp_path, monkeypatch):
     """proxy uninstall removes the plist and calls launchctl unload."""
     import subprocess

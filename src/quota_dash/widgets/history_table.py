@@ -4,6 +4,8 @@ from textual.app import ComposeResult
 from textual.widget import Widget
 from textual.widgets import DataTable, Label
 
+from quota_dash.i18n import t
+
 
 class HistoryTable(Widget):
     DEFAULT_CSS = """
@@ -14,7 +16,7 @@ class HistoryTable(Widget):
     """
 
     def compose(self) -> ComposeResult:
-        yield Label("History (today)", classes="title")
+        yield Label(t("history"), classes="title")
         yield DataTable(id="history-dt")
 
     def on_mount(self) -> None:
@@ -31,7 +33,7 @@ class HistoryTable(Widget):
         dt.clear()
 
         if not calls:
-            dt.add_row("—", "Start proxy to see API call history", "", "")
+            dt.add_row("—", t("no_history"), "", "")
             return
 
         for call in calls:
