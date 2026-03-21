@@ -1,0 +1,43 @@
+site_name: quota-dash
+site_url: https://sooneocean.github.io/quota-dash
+repo_url: https://github.com/sooneocean/quota-dash
+repo_name: sooneocean/quota-dash
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Light mode
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - search.suggest
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started: guides/getting-started.md
+  - Guides:
+    - Proxy: guides/proxy-guide.md
+    - Ghostty: guides/ghostty.md
+  - Architecture: architecture.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
