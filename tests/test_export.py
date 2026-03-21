@@ -130,3 +130,21 @@ def test_cli_export_no_db(tmp_path):
     result = runner.invoke(main, ["--config", str(config_file), "export"])
     assert result.exit_code == 0
     assert "No proxy database" in result.output
+
+
+def test_cli_stats_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["stats", "--help"])
+    assert result.exit_code == 0
+    assert "--period" in result.output
+
+
+def test_cli_stats_no_db(tmp_path):
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(
+        '[proxy]\ndb_path = "/nonexistent/path/usage.db"\n'
+    )
+    runner = CliRunner()
+    result = runner.invoke(main, ["stats", "--config", str(config_file)])
+    assert result.exit_code == 0
+    assert "No proxy database" in result.output or "proxy" in result.output.lower()

@@ -301,6 +301,71 @@ def uninstall() -> None:
     click.echo("Proxy service uninstalled.")
 
 
+def _fmt_tokens(n: int) -> str:
+    """Format token count for display."""
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M"
+    elif n >= 1_000:
+        return f"{n / 1_000:.1f}K"
+    return str(n)
+
+
+@main.command()
+@click.option("--period", default="24h", help="Time period: 1h, 24h, 7d, 30d")
+@click.option("--config", "config_path", default=None, type=click.Path(), help="Config file path")
+def stats(period: str, config_path: str | None) -> None:
+    """Show usage summary statistics."""
+    from rich.panel import Panel
+
+    path = Path(config_path) if config_path else Path.home() / ".config" / "quota-dash" / "config.toml"
+    config = load_config(path if path.exists() else None)
+
+    db_path = config.proxy.db_path
+    if not db_path.exists():
+        Console().print("[yellow]No proxy database found.[/] Start proxy first: [bold]quota-dash proxy start[/]")
+        return
+
+    from quota_dash.export import query_calls, build_summary
+    calls = asyncio.run(query_calls(db_path, period=period))
+    summary = build_summary(calls, period)
+
+    console = Console()
+    table = Table(show_header=True, header_style="bold cyan", border_style="dim")
+    table.add_column("Provider", style="bold")
+    table.add_column("Calls", justify="right")
+    table.add_column("Tokens", justify="right")
+    table.add_column("In", justify="right", style="dim")
+    table.add_column("Out", justify="right", style="dim")
+
+    # Per-provider rows
+    for prov, prov_stats in summary["by_provider"].items():
+        prov_calls = [c for c in calls if c.get("provider") == prov]
+        in_tok = sum(c.get("input_tokens", 0) or 0 for c in prov_calls)
+        out_tok = sum(c.get("output_tokens", 0) or 0 for c in prov_calls)
+        table.add_row(
+            prov,
+            str(prov_stats["calls"]),
+            _fmt_tokens(prov_stats["tokens"]),
+            _fmt_tokens(in_tok),
+            _fmt_tokens(out_tok),
+        )
+
+    # Total row
+    total_in = sum(c.get("input_tokens", 0) or 0 for c in calls)
+    total_out = sum(c.get("output_tokens", 0) or 0 for c in calls)
+    table.add_section()
+    table.add_row(
+        "[bold]Total[/]",
+        f"[bold]{summary['total_calls']}[/]",
+        f"[bold]{_fmt_tokens(summary['total_tokens'])}[/]",
+        _fmt_tokens(total_in),
+        _fmt_tokens(total_out),
+    )
+
+    panel = Panel(table, title=f"[bold]quota-dash stats[/] [dim](last {period})[/]", border_style="cyan")
+    console.print(panel)
+
+
 @main.command()
 @click.option("--period", default="24h", help="Time period: 24h, 7d, 30d")
 @click.option("--format", "fmt", default="csv", type=click.Choice(["csv", "json"]), help="Output format")
