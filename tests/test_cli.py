@@ -72,7 +72,28 @@ def test_cli_proxy_status_not_running():
     runner = CliRunner()
     result = runner.invoke(main, ["proxy", "status"])
     assert result.exit_code == 0
-    assert "not running" in result.output.lower() or "No proxy" in result.output
+    # Output is either "No proxy running." or "Proxy running (PID ...)" depending on environment
+    assert "proxy" in result.output.lower() or "running" in result.output.lower()
+
+
+def test_cli_proxy_status_mocked_not_running(monkeypatch):
+    """Proxy status when daemon reports no process."""
+    import quota_dash.proxy.daemon as daemon_mod
+    monkeypatch.setattr(daemon_mod, "proxy_status", lambda: None)
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "status"])
+    assert result.exit_code == 0
+    assert "No proxy" in result.output
+
+
+def test_cli_proxy_status_mocked_running(monkeypatch):
+    """Proxy status when daemon reports a running process."""
+    import quota_dash.proxy.daemon as daemon_mod
+    monkeypatch.setattr(daemon_mod, "proxy_status", lambda: {"pid": 12345})
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "status"])
+    assert result.exit_code == 0
+    assert "12345" in result.output
 
 
 def test_cli_version():
@@ -109,3 +130,95 @@ def test_cli_proxy_uninstall_no_service():
     result = runner.invoke(main, ["proxy", "uninstall"])
     assert result.exit_code == 0
     assert "No proxy" in result.output or "uninstalled" in result.output.lower()
+
+
+def test_cli_once_with_no_providers():
+    """--once with empty config should print an empty table without error."""
+    runner = CliRunner()
+    result = runner.invoke(main, ["--once"])
+    assert result.exit_code == 0
+
+
+def test_cli_once_json_no_providers():
+    """--once --json with empty config should output valid JSON (empty object)."""
+    runner = CliRunner()
+    result = runner.invoke(main, ["--once", "--json"])
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert isinstance(data, dict)
+
+
+def test_cli_once_provider_filter():
+    """--provider filter with sample config should only show that provider."""
+    runner = CliRunner()
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+        f.write(SAMPLE_CONFIG)
+        config_path = f.name
+
+    result = runner.invoke(main, ["--once", "--json", "--provider", "openai", "--config", config_path])
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert "openai" in data
+    assert "anthropic" not in data
+
+
+def test_cli_once_provider_filter_table():
+    """--provider filter with table output should succeed."""
+    runner = CliRunner()
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+        f.write(SAMPLE_CONFIG)
+        config_path = f.name
+
+    result = runner.invoke(main, ["--once", "--provider", "anthropic", "--config", config_path])
+    assert result.exit_code == 0
+
+
+def test_cli_proxy_install_executes(tmp_path, monkeypatch):
+    """proxy install should write a plist file and attempt launchctl load."""
+    import subprocess
+
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    # Override home so plist goes into tmp_path
+    launch_agents = tmp_path / "Library" / "LaunchAgents"
+    launch_agents.mkdir(parents=True)
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "install"])
+    assert result.exit_code == 0
+    assert "installed" in result.output.lower()
+    plist_path = launch_agents / "com.quota-dash.proxy.plist"
+    assert plist_path.exists()
+    assert any("launchctl" in str(c) for c in calls)
+
+
+def test_cli_proxy_uninstall_with_service(tmp_path, monkeypatch):
+    """proxy uninstall removes the plist and calls launchctl unload."""
+    import subprocess
+
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    launch_agents = tmp_path / "Library" / "LaunchAgents"
+    launch_agents.mkdir(parents=True)
+    plist_path = launch_agents / "com.quota-dash.proxy.plist"
+    plist_path.write_bytes(b"<plist/>")
+
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "uninstall"])
+    assert result.exit_code == 0
+    assert "uninstalled" in result.output.lower()
+    assert not plist_path.exists()
+    assert any("launchctl" in str(c) for c in calls)
