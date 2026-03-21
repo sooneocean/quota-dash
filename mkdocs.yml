@@ -29,6 +29,7 @@ nav:
   - Guides:
     - Proxy: guides/proxy-guide.md
     - Ghostty: guides/ghostty.md
+    - PyPI Setup: guides/pypi-setup.md
   - Architecture: architecture.md
   - Changelog: changelog.md
   - Contributing: contributing.md
