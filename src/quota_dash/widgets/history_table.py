@@ -24,7 +24,9 @@ class HistoryTable(Widget):
         dt.add_column("Tokens", key="tokens")
         dt.add_column("Endpoint", key="endpoint")
 
-    def update_data(self, calls: list[dict]) -> None:
+    def update_data(self, calls: list[dict], period: str = "24h") -> None:
+        title = self.query_one(".title", Label)
+        title.update(f"History ({period})")
         dt = self.query_one("#history-dt", DataTable)
         dt.clear()
 

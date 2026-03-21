@@ -34,6 +34,9 @@ class QuotaDashApp(App):
         Binding("r", "refresh", "Refresh"),
         Binding("tab", "focus_next", "Next Panel", show=False),
         Binding("question_mark", "toggle_help", "Help"),
+        Binding("1", "set_range_1h", "1h", show=False),
+        Binding("2", "set_range_24h", "24h", show=False),
+        Binding("3", "set_range_7d", "7d", show=False),
     ]
 
     def __init__(
@@ -46,6 +49,7 @@ class QuotaDashApp(App):
         self._store = DataStore()
         self._providers: dict[str, Provider] = {}
         self._selected_provider: str | None = None
+        self._time_range: str = "24h"  # "1h", "24h", "7d"
         self._alert_monitor: object = None
         self._watcher: object = None
 
@@ -218,7 +222,7 @@ class QuotaDashApp(App):
             db_path = self._config.proxy.db_path
             if db_path and db_path.exists():
                 from quota_dash.proxy.db import query_token_history
-                history = await query_token_history(db_path, provider_name)
+                history = await query_token_history(db_path, provider_name, period=self._time_range)
                 if history:
                     sparkline_data = [float(tok) for _, tok in history]
             panel.query_one(TokenCard).update_data(tokens, sparkline_data=sparkline_data)
@@ -232,10 +236,27 @@ class QuotaDashApp(App):
         db_path = self._config.proxy.db_path
         if db_path and db_path.exists():
             from quota_dash.proxy.db import query_recent_calls
-            calls = await query_recent_calls(db_path, provider_name)
-            history_table.update_data(calls)
+            calls = await query_recent_calls(db_path, provider_name, period=self._time_range)
+            history_table.update_data(calls, period=self._time_range)
         else:
-            history_table.update_data([])
+            history_table.update_data([], period=self._time_range)
+
+    def action_set_range_1h(self) -> None:
+        self._time_range = "1h"
+        self._on_range_change()
+
+    def action_set_range_24h(self) -> None:
+        self._time_range = "24h"
+        self._on_range_change()
+
+    def action_set_range_7d(self) -> None:
+        self._time_range = "7d"
+        self._on_range_change()
+
+    def _on_range_change(self) -> None:
+        self.notify(f"Time range: {self._time_range}", timeout=2)
+        if self._selected_provider:
+            self.run_worker(self._update_detail(self._selected_provider))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if event.row_key and event.row_key.value != "__total__":
@@ -251,6 +272,7 @@ class QuotaDashApp(App):
             "↑↓  Switch provider\n"
             "r   Refresh\n"
             "Tab Focus next panel\n"
+            "1/2/3 Time range (1h/24h/7d)\n"
             "q   Quit\n"
             "?   This help",
             title="Help",

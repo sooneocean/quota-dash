@@ -179,3 +179,22 @@ async def test_app_watcher_started_when_db_exists(tmp_path):
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app._watcher is not None
+
+
+@pytest.mark.asyncio
+async def test_app_time_range_default():
+    app = QuotaDashApp()
+    async with app.run_test() as pilot:
+        assert app._time_range == "24h"
+
+
+@pytest.mark.asyncio
+async def test_app_time_range_switch():
+    app = QuotaDashApp()
+    async with app.run_test() as pilot:
+        await pilot.press("1")
+        assert app._time_range == "1h"
+        await pilot.press("3")
+        assert app._time_range == "7d"
+        await pilot.press("2")
+        assert app._time_range == "24h"

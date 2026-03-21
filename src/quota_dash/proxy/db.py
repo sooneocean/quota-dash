@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib.util as _ilu
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from quota_dash.models import ProxyData
@@ -133,19 +133,33 @@ async def query_provider_data(db_path: Path, provider: str) -> ProxyData | None:
         return None
 
 
-async def query_recent_calls(db_path: Path, provider: str, limit: int = 20) -> list[dict]:
+def _period_cutoff(period: str) -> str:
+    """Return an ISO-format UTC cutoff timestamp for the given period string (e.g. '1h', '24h', '7d')."""
+    value = int(period[:-1])
+    unit = period[-1]
+    if unit == "h":
+        delta = timedelta(hours=value)
+    elif unit == "d":
+        delta = timedelta(days=value)
+    else:
+        raise ValueError(f"Invalid period: {period}. Use format like '1h', '24h', '7d'")
+    return (datetime.utcnow() - delta).isoformat(sep=" ")
+
+
+async def query_recent_calls(db_path: Path, provider: str, limit: int = 20, period: str = "24h") -> list[dict]:
     if not _HAS_AIOSQLITE:
         return []
     try:
         import aiosqlite
+        cutoff = _period_cutoff(period)
         async with aiosqlite.connect(db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
                 """SELECT timestamp, model, total_tokens, endpoint
                    FROM api_calls WHERE provider = ?
-                   AND date(timestamp) = date('now')
+                   AND timestamp >= ?
                    ORDER BY timestamp DESC LIMIT ?""",
-                (provider, limit),
+                (provider, cutoff, limit),
             )
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
@@ -154,18 +168,30 @@ async def query_recent_calls(db_path: Path, provider: str, limit: int = 20) -> l
         return []
 
 
-async def query_token_history(db_path: Path, provider: str, limit: int = 50) -> list[tuple[datetime, int]]:
+async def query_token_history(
+    db_path: Path, provider: str, limit: int = 50, period: str | None = None
+) -> list[tuple[datetime, int]]:
     if not _HAS_AIOSQLITE:
         return []
     try:
         import aiosqlite
         async with aiosqlite.connect(db_path) as db:
-            cursor = await db.execute(
-                """SELECT timestamp, total_tokens
-                   FROM api_calls WHERE provider = ?
-                   ORDER BY timestamp DESC LIMIT ?""",
-                (provider, limit),
-            )
+            if period is not None:
+                cutoff = _period_cutoff(period)
+                cursor = await db.execute(
+                    """SELECT timestamp, total_tokens
+                       FROM api_calls WHERE provider = ?
+                       AND timestamp >= ?
+                       ORDER BY timestamp DESC LIMIT ?""",
+                    (provider, cutoff, limit),
+                )
+            else:
+                cursor = await db.execute(
+                    """SELECT timestamp, total_tokens
+                       FROM api_calls WHERE provider = ?
+                       ORDER BY timestamp DESC LIMIT ?""",
+                    (provider, limit),
+                )
             rows = await cursor.fetchall()
             return [(datetime.fromisoformat(ts), tok) for ts, tok in reversed(list(rows))]
     except Exception:
