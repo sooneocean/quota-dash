@@ -48,3 +48,34 @@ def test_parse_codex_logs_missing_file():
     result = parse_codex_logs(Path("/nonexistent/logs.sqlite"))
     assert result.total_tokens == 0
     assert result.source == "estimated"
+
+
+def test_parse_claude_costs_permission_error(tmp_path):
+    """File with no read permission should return estimated."""
+    import os
+    path = tmp_path / "no_read.jsonl"
+    path.write_text('{"input_tokens": 100}')
+    os.chmod(path, 0o000)
+    result = parse_claude_costs_jsonl(path)
+    assert result.source == "estimated"
+    os.chmod(path, 0o644)  # cleanup
+
+
+def test_parse_claude_costs_jsonl_malformed_line(tmp_path):
+    """Lines that are not valid JSON should be silently skipped."""
+    path = tmp_path / "costs.jsonl"
+    path.write_text('not json\n{"input_tokens": 10, "output_tokens": 5}\n')
+    result = parse_claude_costs_jsonl(path)
+    assert result.total_tokens == 15
+    assert result.source == "log"
+
+
+def test_parse_claude_costs_jsonl_bad_timestamp(tmp_path):
+    """Entries with malformed timestamps should fall back to datetime.now()."""
+    import json
+    entry = {"timestamp": "INVALID", "input_tokens": 7, "output_tokens": 3}
+    path = tmp_path / "costs.jsonl"
+    path.write_text(json.dumps(entry) + "\n")
+    result = parse_claude_costs_jsonl(path)
+    assert result.total_tokens == 10
+    assert len(result.history) == 1

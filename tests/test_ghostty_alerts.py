@@ -119,3 +119,93 @@ def test_custom_thresholds():
     actions = monitor.check(app, store)
     # 45% < 50% alert threshold, so should trigger alert
     assert any(a["level"] == "alert" for a in actions)
+
+
+def test_set_border_called_on_alert():
+    """_set_border should be invoked when a threshold is crossed."""
+    monitor = AlertMonitor()
+    store = _make_store_with_quota("openai", 15.0, 100.0)
+
+    from quota_dash.widgets.quota_card import QuotaCard
+    mock_card = MagicMock(spec=QuotaCard)
+    app = MagicMock()
+    app.query.return_value = [mock_card]
+
+    monitor.check(app, store)
+    # _set_border calls app.query(QuotaCard) and sets border style
+    app.query.assert_called()
+
+
+def test_reset_border_called_on_recovery():
+    """_reset_border should be called when balance recovers above all thresholds."""
+    monitor = AlertMonitor()
+    app = MagicMock()
+
+    from quota_dash.widgets.quota_card import QuotaCard
+    mock_card = MagicMock(spec=QuotaCard)
+    app.query.return_value = [mock_card]
+
+    # First trigger an alert
+    store_low = _make_store_with_quota("openai", 15.0, 100.0)
+    monitor.check(app, store_low)
+
+    # Then recover — should call _reset_border
+    store_high = _make_store_with_quota("openai", 80.0, 100.0)
+    monitor.check(app, store_high)
+    # query should have been called at least twice (set + reset)
+    assert app.query.call_count >= 2
+
+
+def test_send_notification_called_for_alert_level():
+    """check() should call send_notification for 'alert' level triggers."""
+    monitor = AlertMonitor()
+    store = _make_store_with_quota("openai", 15.0, 100.0)
+    app = MagicMock()
+
+    with patch("quota_dash.ghostty.alerts.send_notification") as mock_notify:
+        monitor.check(app, store)
+        mock_notify.assert_called_once()
+        args = mock_notify.call_args[0][0]
+        assert "openai" in args
+
+
+def test_send_notification_called_for_critical_level():
+    """check() should call send_notification AND send_bell for 'critical' level."""
+    monitor = AlertMonitor()
+    store = _make_store_with_quota("openai", 3.0, 100.0)
+    app = MagicMock()
+
+    with patch("quota_dash.ghostty.alerts.send_notification") as mock_notify, \
+         patch("quota_dash.ghostty.alerts.send_bell") as mock_bell:
+        monitor.check(app, store)
+        mock_notify.assert_called_once()
+        mock_bell.assert_called_once()
+
+
+def test_check_handles_exception_gracefully():
+    """A broken store should not crash the monitor."""
+    monitor = AlertMonitor()
+    broken_store = MagicMock()
+    broken_store.providers.side_effect = RuntimeError("boom")
+    app = MagicMock()
+    # Should not raise
+    actions = monitor.check(app, broken_store)
+    assert actions == []
+
+
+def test_set_border_silently_ignores_query_error():
+    """_set_border should swallow exceptions from app.query."""
+    monitor = AlertMonitor()
+    app = MagicMock()
+    app.query.side_effect = Exception("no widgets")
+    # Must not raise
+    monitor._set_border(app, "openai", "warning")
+
+
+def test_reset_border_silently_ignores_query_error():
+    """_reset_border should swallow exceptions from app.query."""
+    monitor = AlertMonitor()
+    app = MagicMock()
+    app.query.side_effect = Exception("no widgets")
+    # Must not raise
+    monitor._reset_border(app, "openai")
