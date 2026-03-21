@@ -80,3 +80,32 @@ def test_cli_version():
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
     assert "quota-dash" in result.output
+
+
+def test_cli_config_init_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["config", "init", "--help"])
+    assert result.exit_code == 0
+    assert "wizard" in result.output.lower() or "Interactive" in result.output
+
+
+def test_cli_config_init_creates_file(tmp_path):
+    runner = CliRunner()
+    output = tmp_path / "test_config.toml"
+    result = runner.invoke(main, ["config", "init", "--output", str(output)], input="y\ny\n\n\n\nn\nn\nn\ny\n8300\nn\n50\n20\n5\n")
+    assert result.exit_code == 0
+    assert output.exists()
+
+
+def test_cli_proxy_install_help():
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "install", "--help"])
+    assert result.exit_code == 0
+    assert "launchd" in result.output.lower() or "Install" in result.output
+
+
+def test_cli_proxy_uninstall_no_service():
+    runner = CliRunner()
+    result = runner.invoke(main, ["proxy", "uninstall"])
+    assert result.exit_code == 0
+    assert "No proxy" in result.output or "uninstalled" in result.output.lower()

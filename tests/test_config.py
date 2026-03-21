@@ -101,3 +101,8 @@ def test_load_config_alert_defaults():
     assert config.alerts.warning == 50
     assert config.alerts.alert == 20
     assert config.alerts.critical == 5
+
+
+def test_proxy_auto_start_default():
+    config = load_config(None)
+    assert config.proxy.auto_start is False

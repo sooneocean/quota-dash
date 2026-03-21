@@ -131,6 +131,82 @@ def main(
 
 
 @main.group()
+def config() -> None:
+    """Manage configuration."""
+    pass
+
+
+@config.command()
+@click.option("--output", default=None, type=click.Path(), help="Output path")
+def init(output: str | None) -> None:
+    """Interactive config wizard."""
+    import tomli_w
+
+    output_path = Path(output) if output else Path.home() / ".config" / "quota-dash" / "config.toml"
+
+    if output_path.exists():
+        if not click.confirm(f"{output_path} already exists. Overwrite?"):
+            click.echo("Aborted.")
+            return
+
+    # Provider selection
+    all_providers = ["openai", "anthropic", "google", "groq", "mistral"]
+    enabled = []
+    click.echo("\nSelect providers to enable:")
+    for p in all_providers:
+        if click.confirm(f"  Enable {p}?", default=(p in ("openai", "anthropic"))):
+            enabled.append(p)
+
+    # Provider config
+    providers: dict[str, dict] = {}
+    env_defaults = {
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "google": "GOOGLE_API_KEY",
+        "groq": "GROQ_API_KEY",
+        "mistral": "MISTRAL_API_KEY",
+    }
+    for p in enabled:
+        click.echo(f"\n--- {p} ---")
+        key_env = click.prompt("  API key env var", default=env_defaults.get(p, ""))
+        balance = click.prompt("  Balance (USD, blank to skip)", default="", show_default=False)
+        limit = click.prompt("  Limit (USD, blank to skip)", default="", show_default=False)
+        prov: dict = {"enabled": True, "api_key_env": key_env, "log_path": "~/"}
+        if balance:
+            prov["balance_usd"] = float(balance)
+        if limit:
+            prov["limit_usd"] = float(limit)
+        providers[p] = prov
+
+    # Proxy
+    click.echo("\n--- Proxy ---")
+    proxy_enabled = click.confirm("  Enable proxy?", default=True)
+    proxy_port = click.prompt("  Proxy port", default=8300, type=int) if proxy_enabled else 8300
+    auto_start = click.confirm("  Auto-start proxy with dashboard?", default=False) if proxy_enabled else False
+
+    # Alerts
+    click.echo("\n--- Alerts ---")
+    warning = click.prompt("  Warning threshold %", default=50, type=int)
+    alert = click.prompt("  Alert threshold %", default=20, type=int)
+    critical = click.prompt("  Critical threshold %", default=5, type=int)
+
+    # Build config dict
+    config_dict = {
+        "general": {"polling_interval": 60, "theme": "auto"},
+        "providers": providers,
+        "proxy": {"enabled": proxy_enabled, "port": proxy_port, "auto_start": auto_start},
+        "alerts": {"warning": warning, "alert": alert, "critical": critical},
+    }
+
+    # Write
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "wb") as f:
+        tomli_w.dump(config_dict, f)
+
+    click.echo(f"\nConfig written to {output_path}")
+
+
+@main.group()
 @click.pass_context
 def proxy(ctx: click.Context) -> None:
     """Manage the local API proxy."""
@@ -173,3 +249,53 @@ def status() -> None:
         click.echo(f"Proxy running (PID {info['pid']})")
     else:
         click.echo("No proxy running.")
+
+
+@proxy.command()
+@click.pass_context
+def install(ctx: click.Context) -> None:
+    """Install proxy as macOS launchd service."""
+    import plistlib
+
+    config_path_str = ctx.obj.get("config_path") if ctx.obj else None
+    path = Path(config_path_str) if config_path_str else Path.home() / ".config" / "quota-dash" / "config.toml"
+    config = load_config(path if path.exists() else None)
+
+    plist_path = Path.home() / "Library" / "LaunchAgents" / "com.quota-dash.proxy.plist"
+    plist_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Find quota-dash executable
+    import shutil
+    exe = shutil.which("quota-dash") or "quota-dash"
+
+    plist = {
+        "Label": "com.quota-dash.proxy",
+        "ProgramArguments": [exe, "proxy", "start", "--port", str(config.proxy.port)],
+        "RunAtLoad": True,
+        "KeepAlive": True,
+        "StandardOutPath": str(config.proxy.log_path),
+        "StandardErrorPath": str(config.proxy.log_path),
+    }
+
+    with open(plist_path, "wb") as f:
+        plistlib.dump(plist, f)
+
+    import subprocess
+    subprocess.run(["launchctl", "load", str(plist_path)], check=False)
+    click.echo(f"Proxy service installed at {plist_path}")
+    click.echo("It will start automatically on login.")
+
+
+@proxy.command()
+def uninstall() -> None:
+    """Uninstall proxy launchd service."""
+    import subprocess
+
+    plist_path = Path.home() / "Library" / "LaunchAgents" / "com.quota-dash.proxy.plist"
+    if not plist_path.exists():
+        click.echo("No proxy service installed.")
+        return
+
+    subprocess.run(["launchctl", "unload", str(plist_path)], check=False)
+    plist_path.unlink()
+    click.echo("Proxy service uninstalled.")
