@@ -243,6 +243,17 @@ class QuotaDashApp(App):
 
         panel.query_one(RateLimitCard).update_data(proxy)
 
+        # Rate limit prediction
+        db_path = self._config.proxy.db_path
+        if proxy and proxy.ratelimit_remaining_tokens is not None:
+            from quota_dash.data.predictor import predict_rate_limit_exhaustion
+            prediction = await predict_rate_limit_exhaustion(
+                db_path, provider_name,
+                proxy.ratelimit_remaining_tokens,
+                proxy.ratelimit_remaining_requests,
+            )
+            panel.query_one(RateLimitCard).update_prediction(prediction)
+
         # Update HistoryTable
         history_table = self.query_one(HistoryTable)
         db_path = self._config.proxy.db_path

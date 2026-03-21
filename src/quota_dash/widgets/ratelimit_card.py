@@ -37,3 +37,24 @@ class RateLimitCard(Widget):
         if data.ratelimit_reset:
             lines.append(f"Reset: {data.ratelimit_reset}")
         label.update("\n".join(lines) if lines else t("no_data"))
+
+    def update_prediction(self, prediction: dict[str, str | None]) -> None:
+        """Update with rate limit prediction data."""
+        label = self.query_one("#rl-content", Label)
+        current = label.renderable if hasattr(label, 'renderable') else ""
+
+        lines = str(current).split("\n") if str(current) != "no data" else []
+
+        # Remove old prediction lines
+        lines = [line for line in lines if not line.startswith("ETA:")]
+
+        # Add prediction
+        tok_eta = prediction.get("tokens_eta")
+        req_eta = prediction.get("requests_eta")
+        if tok_eta:
+            lines.append(f"ETA: tokens exhaust in {tok_eta}")
+        if req_eta:
+            lines.append(f"ETA: requests exhaust in {req_eta}")
+
+        if lines:
+            label.update("\n".join(lines))
